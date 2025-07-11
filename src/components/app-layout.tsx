@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Globe, Settings } from "lucide-react";
+import { Globe, Settings, LayoutDashboard, GanttChartSquare, FileText, FilePenLine, MessageSquare } from "lucide-react";
 
 import {
   SidebarProvider,
@@ -28,10 +28,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+const iconMap: { [key: string]: LucideIcon } = {
+  LayoutDashboard,
+  GanttChartSquare,
+  FileText,
+  FilePenLine,
+  MessageSquare,
+};
+
 export interface NavLink {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: keyof typeof iconMap;
 }
 
 interface AppLayoutProps {
@@ -58,16 +66,18 @@ export function AppLayout({ navLinks, userName, userRole, userAvatar, children }
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navLinks.map((link) => (
+            {navLinks.map((link) => {
+              const Icon = iconMap[link.icon];
+              return (
               <SidebarMenuItem key={link.href}>
                 <Link href={link.href} passHref>
                   <SidebarMenuButton isActive={pathname.startsWith(link.href)} tooltip={link.label}>
-                    <link.icon />
+                    {Icon && <Icon />}
                     <span>{link.label}</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-            ))}
+            )})}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>

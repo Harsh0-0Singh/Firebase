@@ -1,10 +1,9 @@
 import { AppLayout, type NavLink } from "@/components/app-layout";
-import { LayoutDashboard, GanttChartSquare, FileText } from "lucide-react";
 
 const navLinks: NavLink[] = [
-  { href: "/manager/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/manager/tasks", label: "Tasks", icon: GanttChartSquare },
-  { href: "/manager/reports", label: "Reports", icon: FileText },
+  { href: "/manager/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/manager/tasks", label: "Tasks", icon: "GanttChartSquare" },
+  { href: "/manager/reports", label: "Reports", icon: "FileText" },
 ];
 
 export default function ManagerLayout({ children }: { children: React.ReactNode }) {
