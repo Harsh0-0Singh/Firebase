@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Task, tasks } from '@/lib/data';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, addMonths, subMonths, isToday } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, addMonths, subMonths, isToday, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,7 +28,7 @@ export function TeamCalendar() {
   const startingDayIndex = getDay(firstDayOfMonth);
 
   const tasksByDate = tasks.reduce((acc, task) => {
-    const date = task.dueDate;
+    const date = format(parseISO(task.dueDate), 'yyyy-MM-dd');
     if (!acc[date]) {
       acc[date] = [];
     }
