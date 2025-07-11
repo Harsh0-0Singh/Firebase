@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Globe, Settings, LayoutDashboard, GanttChartSquare, FileText, FilePenLine, MessageSquare } from "lucide-react";
+import { Globe, Settings, LayoutDashboard, GanttChartSquare, FileText, FilePenLine, MessageSquare, Users } from "lucide-react";
 
 import {
   SidebarProvider,
@@ -34,6 +34,7 @@ const iconMap: { [key: string]: LucideIcon } = {
   FileText,
   FilePenLine,
   MessageSquare,
+  Users,
 };
 
 export interface NavLink {
@@ -60,7 +61,7 @@ export function AppLayout({ navLinks, userName, userRole, userAvatar, children }
           <div className="flex items-center gap-2">
             <Globe className="w-8 h-8 text-primary" />
             <div className="flex flex-col">
-              <h2 className="text-lg font-semibold font-headline">CollaboSphere</h2>
+              <h2 className="text-lg font-semibold font-headline">Brands in House</h2>
             </div>
           </div>
         </SidebarHeader>

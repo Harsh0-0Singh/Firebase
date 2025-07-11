@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'CollaboSphere',
+  title: 'Brands in House',
   description: 'Your integrated platform for seamless collaboration.',
 };
 

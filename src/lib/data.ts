@@ -1,4 +1,5 @@
 export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Blocked";
+export type EmployeeRole = "Manager" | "Developer" | "Designer";
 
 export interface Task {
   id: string;
@@ -14,7 +15,7 @@ export interface Task {
 export interface Employee {
   id: string;
   name: string;
-  role: "Manager" | "Developer" | "Designer";
+  role: EmployeeRole;
   avatar: string;
   points: number;
 }

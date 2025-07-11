@@ -27,16 +27,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { tasks as initialTasks, employees, Task, TaskStatus } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 export default function ManagerTasksPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [rating, setRating] = useState(0);
   const { toast } = useToast();
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskAssignee, setNewTaskAssignee] = useState('');
+  const [newTaskClient, setNewTaskClient] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
     setTasks(tasks.map(task => 
@@ -53,6 +64,40 @@ export default function ManagerTasksPage() {
     setRating(0);
   };
 
+  const handleCreateTask = () => {
+    if (!newTaskTitle || !newTaskAssignee || !newTaskClient || !newTaskDueDate) {
+       toast({
+        title: "Error",
+        description: "Please fill out all fields to create a task.",
+        variant: "destructive"
+      });
+      return;
+    }
+    const newTask: Task = {
+      id: `T${tasks.length + 1}`,
+      title: newTaskTitle,
+      description: newTaskDescription,
+      assignee: newTaskAssignee,
+      client: newTaskClient,
+      dueDate: format(new Date(newTaskDueDate), 'yyyy-MM-dd'),
+      status: 'Pending',
+      rating: 0,
+    };
+    setTasks([...tasks, newTask]);
+    toast({
+      title: "Task Created!",
+      description: `Task "${newTask.title}" has been assigned to ${newTask.assignee}.`
+    });
+    
+    // Reset form
+    setNewTaskTitle('');
+    setNewTaskDescription('');
+    setNewTaskAssignee('');
+    setNewTaskClient('');
+    setNewTaskDueDate('');
+    setIsCreateDialogOpen(false);
+  }
+
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
       case 'Completed': return 'bg-green-500 hover:bg-green-600';
@@ -66,10 +111,59 @@ export default function ManagerTasksPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Task Manager</CardTitle>
-        <CardDescription>
-          Assign, track, and update task statuses across your team.
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Task Manager</CardTitle>
+            <CardDescription>
+              Assign, track, and update task statuses across your team.
+            </CardDescription>
+          </div>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Create Task</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create a New Task</DialogTitle>
+                <DialogDescription>
+                  Fill in the details below to create and assign a new task.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">Title</Label>
+                  <Input id="title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">Description</Label>
+                  <Textarea id="description" value={newTaskDescription} onChange={e => setNewTaskDescription(e.target.value)} className="col-span-3" />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="assignee" className="text-right">Assignee</Label>
+                  <Select onValueChange={setNewTaskAssignee} value={newTaskAssignee}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select an employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map(e => <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="client" className="text-right">Client</Label>
+                  <Input id="client" value={newTaskClient} onChange={e => setNewTaskClient(e.target.value)} className="col-span-3" placeholder="e.g. Innovate Corp" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="dueDate" className="text-right">Due Date</Label>
+                  <Input id="dueDate" type="date" value={newTaskDueDate} onChange={e => setNewTaskDueDate(e.target.value)} className="col-span-3" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleCreateTask}>Create Task</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>

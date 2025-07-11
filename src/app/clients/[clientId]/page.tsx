@@ -24,7 +24,7 @@ export default function ClientPortalPage({ params }: { params: { clientId: strin
         <div className="container mx-auto flex justify-between items-center p-4">
           <div className="flex items-center gap-2">
             <Globe className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold font-headline">CollaboSphere</h1>
+            <h1 className="text-2xl font-bold font-headline">Brands in House</h1>
           </div>
           <Link href="/">
              <Button variant="outline">Back to Home</Button>

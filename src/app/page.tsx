@@ -23,7 +23,7 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-bold font-headline">
-            Welcome to CollaboSphere
+            Welcome to Brands in House
           </CardTitle>
           <CardDescription>
             Your integrated platform for seamless collaboration.
