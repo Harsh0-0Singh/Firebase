@@ -61,6 +61,27 @@ export interface TaskRequest {
     status: 'Pending' | 'Approved' | 'Rejected';
 }
 
+export type MessageType = 'chat' | 'notification';
+
+export interface ChatMessage {
+    id: string;
+    type: 'chat';
+    authorId: string;
+    content: string;
+    timestamp: string;
+}
+
+export interface NotificationMessage {
+    id: string;
+    type: 'notification';
+    authorId: string;
+    content: string;
+    timestamp: string;
+    taskId?: string;
+}
+
+export type Message = ChatMessage | NotificationMessage;
+
 
 export const clients: Client[] = [
     { id: '1', name: 'Innovate Corp', contactEmail: 'contact@innovate.com', username: 'client1', password: 'password', contactNumber: '123-456-7890', dob: '1990-01-01' },
@@ -96,4 +117,29 @@ export const taskRequests: TaskRequest[] = [
     { id: 'REQ1', title: 'Add Dark Mode to Client Portal', description: 'Our team would love to have a dark mode option in the portal for better viewing at night.', client: 'Innovate Corp', status: 'Pending' },
     { id: 'REQ2', title: 'Export Data as CSV', description: 'We need a feature to export the task list as a CSV file for our internal records.', client: 'Tech Solutions', status: 'Pending' },
     { id: 'REQ3', title: 'Update Company Logo', description: 'We have rebranded and need to update our logo across the platform.', client: 'Innovate Corp', status: 'Pending' },
+];
+
+export const messages: Message[] = [
+    {
+        id: 'M1',
+        type: 'chat',
+        authorId: '1',
+        content: 'Hey team, welcome to the new Team Hub! Feel free to share updates and ask questions here.',
+        timestamp: '2024-08-10T09:00:00Z'
+    },
+    {
+        id: 'M2',
+        type: 'chat',
+        authorId: '2',
+        content: 'This is great! Much easier to keep track of things.',
+        timestamp: '2024-08-10T09:05:00Z'
+    },
+    {
+        id: 'M3',
+        type: 'notification',
+        authorId: '1',
+        content: "created a new task 'Develop Landing Page' and assigned it to Jane Smith.",
+        taskId: 'T1',
+        timestamp: '2024-08-10T10:00:00Z'
+    }
 ];

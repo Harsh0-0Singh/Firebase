@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { taskRequests as initialTaskRequests, employees, TaskRequest, tasks as initialTasks, Task } from "@/lib/data";
+import { taskRequests as initialTaskRequests, employees, TaskRequest, tasks as initialTasks, Task, messages as initialMessages, Message, NotificationMessage } from "@/lib/data";
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ import { format } from 'date-fns';
 export default function TaskRequestsPage() {
   const [requests, setRequests] = useState(initialTaskRequests);
   const [tasks, setTasks] = useState(initialTasks);
+  const [messages, setMessages] = useState(initialMessages);
   const [selectedAssignees, setSelectedAssignees] = useState<Record<string, string[]>>({});
   const { toast } = useToast();
   
@@ -58,6 +59,17 @@ export default function TaskRequestsPage() {
     };
     setTasks([...tasks, newTask]);
     
+    // Add notification to chat
+    const newNotification: NotificationMessage = {
+      id: `M${messages.length + 1}`,
+      type: 'notification',
+      content: `approved request "${newTask.title}" and assigned it to ${newTask.assignees.join(', ')}.`,
+      authorId: '1', // Alex Doe
+      timestamp: new Date().toISOString(),
+      taskId: newTask.id,
+    };
+    setMessages([...messages, newNotification]);
+
     setRequests(requests.filter(r => r.id !== request.id));
     
     toast({

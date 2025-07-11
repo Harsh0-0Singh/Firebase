@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { tasks as initialTasks, employees, Task, TaskStatus, clients } from "@/lib/data";
+import { tasks as initialTasks, employees, Task, TaskStatus, clients, messages as initialMessages, NotificationMessage } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,7 @@ import { ChevronsUpDown } from 'lucide-react';
 
 export default function ManagerTasksPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [messages, setMessages] = useState(initialMessages);
   const [rating, setRating] = useState(0);
   const { toast } = useToast();
 
@@ -91,6 +92,17 @@ export default function ManagerTasksPage() {
       comments: [],
     };
     setTasks([...tasks, newTask]);
+
+    const newNotification: NotificationMessage = {
+      id: `M${messages.length + 1}`,
+      type: 'notification',
+      content: `created a new task "${newTask.title}" and assigned it to ${newTask.assignees.join(', ')}.`,
+      authorId: '1', // Alex Doe
+      timestamp: new Date().toISOString(),
+      taskId: newTask.id,
+    };
+    setMessages([...messages, newNotification]);
+
     toast({
       title: "Task Created!",
       description: `Task "${newTask.title}" has been assigned.`
