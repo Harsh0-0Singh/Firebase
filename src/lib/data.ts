@@ -68,7 +68,7 @@ export const clients: Client[] = [
 ];
 
 export const employees: Employee[] = [
-  { id: '1', name: 'Alex Doe', role: 'Manager', avatar: 'https://placehold.co/40x40.png', points: 0, username: 'manager', password: 'password' },
+  { id: '1', name: 'Alex Doe', role: 'Manager', avatar: 'https://placehold.co/40x40.png', points: 0, username: 'base', password: 'Base@!9098' },
   { id: '2', name: 'Jane Smith', role: 'Developer', avatar: 'https://placehold.co/40x40.png', points: 125, username: 'jane', password: 'password', contactNumber: '555-1234', dob: '1992-08-20' },
   { id: '3', name: 'Mike Johnson', role: 'Designer', avatar: 'https://placehold.co/40x40.png', points: 88, username: 'mike', password: 'password', contactNumber: '555-5678', dob: '1988-11-30' },
   { id: '4', name: 'Emily Brown', role: 'Developer', avatar: 'https://placehold.co/40x40.png', points: 210, username: 'emily', password: 'password', contactNumber: '555-9012', dob: '1995-03-12' },

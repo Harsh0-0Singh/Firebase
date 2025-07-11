@@ -18,8 +18,7 @@ import { employees, clients } from '@/lib/data';
 
 // Mock user data for login
 const users = [
-  { username: 'manager', password: 'password', role: 'manager', redirect: '/manager/dashboard' },
-  ...employees.map(e => ({ username: e.username, password: e.password, role: 'employee', redirect: '/employee/dashboard' })),
+  ...employees.map(e => ({ username: e.username, password: e.password, role: e.role.toLowerCase(), redirect: e.role === 'Manager' ? '/manager/dashboard' : '/employee/dashboard' })),
   ...clients.map(c => ({ username: c.username, password: c.password, role: 'client', redirect: `/clients/${c.id}` })),
 ];
 
