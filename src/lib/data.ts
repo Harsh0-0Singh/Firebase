@@ -61,6 +61,18 @@ export interface TaskRequest {
     status: 'Pending' | 'Approved' | 'Rejected';
 }
 
+export interface ResourceRequest {
+    id: string;
+    requesterId: string;
+    requesterName: string;
+    itemName: string;
+    reason: string;
+    status: 'Pending' | 'Approved' | 'Rejected' | 'Completed';
+    dueDate?: string;
+    assignedToId?: string;
+    createdAt: string;
+}
+
 export type MessageType = 'chat' | 'notification';
 
 export interface ChatMessage {
@@ -142,4 +154,10 @@ export const messages: Message[] = [
         taskId: 'T1',
         timestamp: '2024-08-10T10:00:00Z'
     }
+];
+
+export const resourceRequests: ResourceRequest[] = [
+    { id: 'RES1', requesterId: '2', requesterName: 'Jane Smith', itemName: 'New Laptop', reason: 'Current laptop is slow and affects productivity.', status: 'Pending', createdAt: '2024-08-12T14:00:00Z' },
+    { id: 'RES2', requesterId: '3', requesterName: 'Mike Johnson', itemName: 'Ergonomic Chair', reason: 'Experiencing back pain with the current chair.', status: 'Pending', createdAt: '2024-08-11T10:30:00Z' },
+    { id: 'RES3', requesterId: '4', requesterName: 'Emily Brown', itemName: '4K Monitor', reason: 'Need a larger screen for better multitasking during development.', status: 'Approved', assignedToId: '1', dueDate: '2024-08-20', createdAt: '2024-08-10T16:00:00Z' },
 ];

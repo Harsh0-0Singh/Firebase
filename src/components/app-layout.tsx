@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Globe, Settings, LayoutDashboard, GanttChartSquare, FileText, FilePenLine, MessageSquare, Users, Briefcase, ClipboardCheck, User } from "lucide-react";
+import { Globe, Settings, LayoutDashboard, GanttChartSquare, FileText, FilePenLine, MessageSquare, Users, Briefcase, ClipboardCheck, User, PackagePlus, PackageSearch } from "lucide-react";
 
 import {
   SidebarProvider,
@@ -38,7 +38,9 @@ const iconMap: { [key: string]: LucideIcon } = {
   Briefcase,
   ClipboardCheck,
   User,
-  Settings
+  Settings,
+  PackagePlus,
+  PackageSearch,
 };
 
 export interface NavLink {
