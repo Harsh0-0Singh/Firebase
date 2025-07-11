@@ -111,10 +111,10 @@ export default function ManagerEmployeesPage() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <Card className="lg:col-span-2">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <CardTitle>Manage Employees</CardTitle>
               <CardDescription>View, add, or edit employee details.</CardDescription>
@@ -132,27 +132,23 @@ export default function ManagerEmployeesPage() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">
-                          Name
-                        </Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
                         <Input
                           id="name"
                           name="name"
-                          className="col-span-3"
                           placeholder="e.g. John Doe"
                           aria-describedby="name-error"
                         />
+                         <div id="name-error" aria-live="polite" aria-atomic="true">
+                            {state.errors?.name && state.errors.name.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                         </div>
                       </div>
-                      <div id="name-error" aria-live="polite" aria-atomic="true">
-                        {state.errors?.name && state.errors.name.map((error: string) => <p className="mt-2 text-sm text-destructive text-right col-span-4" key={error}>{error}</p>)}
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="role" className="text-right">
-                          Role
-                        </Label>
+
+                       <div className="space-y-2">
+                        <Label htmlFor="role">Role</Label>
                          <Select name="role" defaultValue={initialRoles[1]}>
-                          <SelectTrigger className="col-span-3">
+                          <SelectTrigger>
                             <SelectValue placeholder="Select a role" />
                           </SelectTrigger>
                           <SelectContent>
@@ -160,37 +156,34 @@ export default function ManagerEmployeesPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="username" className="text-right">
-                          Username
-                        </Label>
+
+                       <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
                         <Input
                           id="username"
                           name="username"
-                          className="col-span-3"
                           placeholder="e.g. johndoe"
                            aria-describedby="username-error"
                         />
+                         <div id="username-error" aria-live="polite" aria-atomic="true">
+                            {state.errors?.username && state.errors.username.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                         </div>
                       </div>
-                       <div id="username-error" aria-live="polite" aria-atomic="true">
-                        {state.errors?.username && state.errors.username.map((error: string) => <p className="mt-2 text-sm text-destructive text-right col-span-4" key={error}>{error}</p>)}
-                      </div>
-                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password" className="text-right">
-                          Password
-                        </Label>
+
+                       <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
                         <Input
                           id="password"
                           name="password"
                           type="password"
-                          className="col-span-3"
                           placeholder="Set an initial password"
                            aria-describedby="password-error"
                         />
+                          <div id="password-error" aria-live="polite" aria-atomic="true">
+                            {state.errors?.password && state.errors.password.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                          </div>
                       </div>
-                      <div id="password-error" aria-live="polite" aria-atomic="true">
-                        {state.errors?.password && state.errors.password.map((error: string) => <p className="mt-2 text-sm text-destructive text-right col-span-4" key={error}>{error}</p>)}
-                      </div>
+                     
                     </div>
                     <DialogFooter>
                       <SubmitButton />
@@ -201,32 +194,34 @@ export default function ManagerEmployeesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Username</TableHead>
-                <TableHead>Points</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.id}>
-                  <TableCell className="font-medium">
-                    <Link href={`/manager/employees/${employee.id}`} className="hover:underline">
-                      {employee.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{employee.role}</Badge>
-                  </TableCell>
-                  <TableCell>{employee.username}</TableCell>
-                  <TableCell>{employee.points}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Username</TableHead>
+                    <TableHead>Points</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {employees.map((employee) => (
+                    <TableRow key={employee.id}>
+                      <TableCell className="font-medium">
+                        <Link href={`/manager/employees/${employee.id}`} className="hover:underline">
+                          {employee.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{employee.role}</Badge>
+                      </TableCell>
+                      <TableCell>{employee.username}</TableCell>
+                      <TableCell>{employee.points}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+          </div>
         </CardContent>
       </Card>
       <div className="space-y-6">

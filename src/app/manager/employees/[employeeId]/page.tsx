@@ -35,7 +35,7 @@ export default function EmployeeProfilePage({ params }: { params: { employeeId: 
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 border-2 border-primary">
             <AvatarImage src={employee.avatar} alt={employee.name} data-ai-hint="person" />
@@ -51,7 +51,7 @@ export default function EmployeeProfilePage({ params }: { params: { employeeId: 
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Points</CardTitle>
@@ -100,44 +100,46 @@ export default function EmployeeProfilePage({ params }: { params: { employeeId: 
           <CardDescription>A complete list of tasks assigned to {employee.name}.</CardDescription>
         </CardHeader>
         <CardContent>
-           <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Task Title</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Rating</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employeeTasks.length > 0 ? employeeTasks.map(task => (
-                  <TableRow key={task.id}>
-                    <TableCell className="font-medium">
-                       <Link href={`/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
-                    </TableCell>
-                    <TableCell>{task.client}</TableCell>
-                    <TableCell>{task.dueDate}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={cn("text-white", getStatusColor(task.status))}>{task.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        {task.rating > 0 ? (
-                            <div className="flex justify-end">
-                               <Rating count={5} value={task.rating} readOnly size={16} />
-                            </div>
-                        ) : (
-                            <span className="text-muted-foreground text-xs">Not Rated</span>
-                        )}
-                    </TableCell>
+           <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task Title</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Rating</TableHead>
                   </TableRow>
-                )) : (
-                    <TableRow>
-                        <TableCell colSpan={5} className="text-center h-24">No tasks assigned yet.</TableCell>
+                </TableHeader>
+                <TableBody>
+                  {employeeTasks.length > 0 ? employeeTasks.map(task => (
+                    <TableRow key={task.id}>
+                      <TableCell className="font-medium">
+                         <Link href={`/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
+                      </TableCell>
+                      <TableCell>{task.client}</TableCell>
+                      <TableCell>{task.dueDate}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={cn("text-white", getStatusColor(task.status))}>{task.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                          {task.rating > 0 ? (
+                              <div className="flex justify-end">
+                                 <Rating count={5} value={task.rating} readOnly size={16} />
+                              </div>
+                          ) : (
+                              <span className="text-muted-foreground text-xs">Not Rated</span>
+                          )}
+                      </TableCell>
                     </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )) : (
+                      <TableRow>
+                          <TableCell colSpan={5} className="text-center h-24">No tasks assigned yet.</TableCell>
+                      </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+           </div>
         </CardContent>
       </Card>
     </div>

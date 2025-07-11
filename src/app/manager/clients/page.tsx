@@ -75,7 +75,7 @@ export default function ManagerClientsPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <CardTitle>Manage Clients</CardTitle>
             <CardDescription>View and add new clients.</CardDescription>
@@ -92,20 +92,19 @@ export default function ManagerClientsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
+                <div className="space-y-2">
+                  <Label htmlFor="name">
                     Name
                   </Label>
                   <Input
                     id="name"
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    className="col-span-3"
                     placeholder="e.g. Innovate Corp"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="contact" className="text-right">
+                <div className="space-y-2">
+                  <Label htmlFor="contact">
                     Contact Email
                   </Label>
                   <Input
@@ -113,24 +112,22 @@ export default function ManagerClientsPage() {
                     type="email"
                     value={newClientContact}
                     onChange={(e) => setNewClientContact(e.target.value)}
-                    className="col-span-3"
                     placeholder="e.g. contact@innovate.com"
                   />
                 </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
+                 <div className="space-y-2">
+                  <Label htmlFor="username">
                     Username
                   </Label>
                   <Input
                     id="username"
                     value={newClientUsername}
                     onChange={(e) => setNewClientUsername(e.target.value)}
-                    className="col-span-3"
                     placeholder="e.g. innovatecorp"
                   />
                 </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="password" className="text-right">
+                 <div className="space-y-2">
+                  <Label htmlFor="password">
                     Password
                   </Label>
                   <Input
@@ -138,7 +135,6 @@ export default function ManagerClientsPage() {
                     type="password"
                     value={newClientPassword}
                     onChange={(e) => setNewClientPassword(e.target.value)}
-                    className="col-span-3"
                     placeholder="Set an initial password"
                   />
                 </div>
@@ -151,32 +147,34 @@ export default function ManagerClientsPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Client Name</TableHead>
-              <TableHead>Contact Email</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead className="text-right">Portal Link</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.id}>
-                <TableCell className="font-medium">{client.name}</TableCell>
-                <TableCell>{client.contactEmail}</TableCell>
-                <TableCell>{client.username}</TableCell>
-                <TableCell className="text-right">
-                  <Button asChild variant="ghost" size="icon">
-                    <a href={`/clients/${client.id}`} target="_blank">
-                      <Globe className="h-4 w-4" />
-                    </a>
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client Name</TableHead>
+                <TableHead>Contact Email</TableHead>
+                <TableHead>Username</TableHead>
+                <TableHead className="text-right">Portal Link</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {clients.map((client) => (
+                <TableRow key={client.id}>
+                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell>{client.contactEmail}</TableCell>
+                  <TableCell>{client.username}</TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="ghost" size="icon">
+                      <a href={`/clients/${client.id}`} target="_blank">
+                        <Globe className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

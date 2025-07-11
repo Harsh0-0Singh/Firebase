@@ -43,14 +43,14 @@ export default function EmployeeDashboard() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Welcome, {employee.name}!</h1>
           <p className="text-muted-foreground">Here's your personal dashboard.</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">My Points</CardTitle>
@@ -86,7 +86,7 @@ export default function EmployeeDashboard() {
         
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <CardTitle>My Active Tasks</CardTitle>
                 <CardDescription>Here are your tasks that are not yet completed.</CardDescription>
@@ -97,26 +97,28 @@ export default function EmployeeDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-             <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {myTasks.filter(t => t.status !== 'Completed').slice(0, 3).map(task => (
-                    <TableRow key={task.id}>
-                      <TableCell className="font-medium">{task.title}</TableCell>
-                      <TableCell>{task.dueDate}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={cn("text-white", getStatusColor(task.status))}>{task.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+             <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {myTasks.filter(t => t.status !== 'Completed').slice(0, 3).map(task => (
+                        <TableRow key={task.id}>
+                          <TableCell className="font-medium">{task.title}</TableCell>
+                          <TableCell>{task.dueDate}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={cn("text-white", getStatusColor(task.status))}>{task.status}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+             </div>
           </CardContent>
         </Card>
       </div>
