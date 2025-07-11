@@ -1,5 +1,14 @@
 export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Blocked";
 export type EmployeeRole = string;
+export type UserRole = 'Manager' | 'Employee' | 'Client';
+
+export interface Comment {
+    id: string;
+    authorName: string;
+    authorRole: UserRole;
+    content: string;
+    timestamp: string;
+}
 
 export interface Client {
     id: string;
@@ -16,6 +25,9 @@ export interface Task {
   status: TaskStatus;
   client: string;
   rating: number;
+  createdBy: string;
+  createdAt: string;
+  comments: Comment[];
 }
 
 export interface Employee {
@@ -55,12 +67,15 @@ export const employees: Employee[] = [
 ];
 
 export const tasks: Task[] = [
-  { id: 'T1', title: 'Develop Landing Page', description: 'Create a responsive landing page for Project Alpha.', assignees: ['Jane Smith'], dueDate: '2024-08-15', status: 'Completed', client: 'Innovate Corp', rating: 5 },
-  { id: 'T2', title: 'Design Mobile App UI', description: 'Design the main screens for the new mobile app.', assignees: ['Mike Johnson'], dueDate: '2024-08-20', status: 'In Progress', client: 'Innovate Corp', rating: 0 },
-  { id: 'T3', title: 'API Integration', description: 'Integrate the new payment gateway API.', assignees: ['Emily Brown', 'Jane Smith'], dueDate: '2024-08-25', status: 'In Progress', client: 'Innovate Corp', rating: 0 },
-  { id: 'T4', title: 'User Authentication Flow', description: 'Implement the complete user login and registration flow.', assignees: ['Jane Smith'], dueDate: '2024-09-01', status: 'Pending', client: 'Tech Solutions', rating: 0 },
-  { id: 'T5', title: 'Create Marketing Banners', description: 'Design a set of banners for the upcoming campaign.', assignees: ['Mike Johnson'], dueDate: '2024-08-18', status: 'Completed', client: 'Tech Solutions', rating: 4 },
-  { id: 'T6', title: 'Database Schema Migration', description: 'Migrate the old database schema to the new version.', assignees: ['Emily Brown'], dueDate: '2024-09-05', status: 'Blocked', client: 'Innovate Corp', rating: 0 },
+  { id: 'T1', title: 'Develop Landing Page', description: 'Create a responsive landing page for Project Alpha.', assignees: ['Jane Smith'], dueDate: '2024-08-15', status: 'Completed', client: 'Innovate Corp', rating: 5, createdBy: 'Alex Doe', createdAt: '2024-07-20T10:00:00Z', comments: [
+      { id: 'C1', authorName: 'Alex Doe', authorRole: 'Manager', content: 'Great start! Let\'s aim to get the hero section done by EOD Wednesday.', timestamp: '2024-07-21T11:30:00Z' },
+      { id: 'C2', authorName: 'Jane Smith', authorRole: 'Employee', content: 'Sounds good. I\'ve pushed the initial commit.', timestamp: '2024-07-22T15:00:00Z' }
+  ]},
+  { id: 'T2', title: 'Design Mobile App UI', description: 'Design the main screens for the new mobile app.', assignees: ['Mike Johnson'], dueDate: '2024-08-20', status: 'In Progress', client: 'Innovate Corp', rating: 0, createdBy: 'Alex Doe', createdAt: '2024-07-25T10:00:00Z', comments: [] },
+  { id: 'T3', title: 'API Integration', description: 'Integrate the new payment gateway API.', assignees: ['Emily Brown', 'Jane Smith'], dueDate: '2024-08-25', status: 'In Progress', client: 'Innovate Corp', rating: 0, createdBy: 'Alex Doe', createdAt: '2024-08-01T10:00:00Z', comments: [] },
+  { id: 'T4', title: 'User Authentication Flow', description: 'Implement the complete user login and registration flow.', assignees: ['Jane Smith'], dueDate: '2024-09-01', status: 'Pending', client: 'Tech Solutions', rating: 0, createdBy: 'Alex Doe', createdAt: '2024-08-05T10:00:00Z', comments: [] },
+  { id: 'T5', title: 'Create Marketing Banners', description: 'Design a set of banners for the upcoming campaign.', assignees: ['Mike Johnson'], dueDate: '2024-08-18', status: 'Completed', client: 'Tech Solutions', rating: 4, createdBy: 'Alex Doe', createdAt: '2024-08-10T10:00:00Z', comments: [] },
+  { id: 'T6', title: 'Database Schema Migration', description: 'Migrate the old database schema to the new version.', assignees: ['Emily Brown'], dueDate: '2024-09-05', status: 'Blocked', client: 'Innovate Corp', rating: 0, createdBy: 'Alex Doe', createdAt: '2024-08-12T10:00:00Z', comments: [] },
 ];
 
 export const reports: Report[] = [

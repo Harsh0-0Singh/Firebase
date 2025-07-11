@@ -113,7 +113,9 @@ export default function EmployeeProfilePage({ params }: { params: { employeeId: 
               <TableBody>
                 {employeeTasks.length > 0 ? employeeTasks.map(task => (
                   <TableRow key={task.id}>
-                    <TableCell className="font-medium">{task.title}</TableCell>
+                    <TableCell className="font-medium">
+                       <Link href={`/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
+                    </TableCell>
                     <TableCell>{task.client}</TableCell>
                     <TableCell>{task.dueDate}</TableCell>
                     <TableCell>

@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { taskRequests as initialTaskRequests, employees, TaskRequest } from "@/lib/data";
+import { taskRequests as initialTaskRequests, employees, TaskRequest, tasks as initialTasks, Task } from "@/lib/data";
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -23,10 +23,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ChevronsUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { format } from 'date-fns';
 
 
 export default function TaskRequestsPage() {
   const [requests, setRequests] = useState(initialTaskRequests);
+  const [tasks, setTasks] = useState(initialTasks);
   const [selectedAssignees, setSelectedAssignees] = useState<Record<string, string[]>>({});
   const { toast } = useToast();
   
@@ -41,13 +43,28 @@ export default function TaskRequestsPage() {
       return;
     }
     
-    // In a real app, this would create a new task and update the request status
+    const newTask: Task = {
+      id: `T${tasks.length + 1}`,
+      title: request.title,
+      description: request.description,
+      assignees: assignees,
+      client: request.client,
+      dueDate: format(new Date(), 'yyyy-MM-dd'), // Placeholder, should be settable
+      status: 'Pending',
+      rating: 0,
+      createdBy: 'Alex Doe', // Manager approving
+      createdAt: format(new Date(), 'yyyy-MM-dd'),
+      comments: [],
+    };
+    setTasks([...tasks, newTask]);
+    
     setRequests(requests.filter(r => r.id !== request.id));
     
     toast({
       title: 'Task Approved!',
       description: `The request "${request.title}" has been approved and assigned.`,
     });
+
     setSelectedAssignees(prev => {
         const next = {...prev};
         delete next[request.id];

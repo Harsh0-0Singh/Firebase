@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -85,6 +86,9 @@ export default function ManagerTasksPage() {
       dueDate: format(new Date(newTaskDueDate), 'yyyy-MM-dd'),
       status: 'Pending',
       rating: 0,
+      createdBy: 'Alex Doe', // Logged in manager
+      createdAt: format(new Date(), 'yyyy-MM-dd'),
+      comments: [],
     };
     setTasks([...tasks, newTask]);
     toast({
@@ -220,7 +224,9 @@ export default function ManagerTasksPage() {
           <TableBody>
             {tasks.map((task) => (
               <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
+                <TableCell className="font-medium">
+                  <Link href={`/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
+                </TableCell>
                 <TableCell>
                     <div className="flex flex-col gap-1">
                         {task.assignees.map(assignee => <Badge key={assignee} variant="secondary" className="font-normal w-fit">{assignee}</Badge>)}

@@ -61,7 +61,7 @@ export default function ClientPortalPage({ params }: { params: { clientId: strin
                            {task.status === 'Completed' && <CheckCircle className="h-3 w-3 text-white" />}
                          </div>
                         <div>
-                          <p className="font-medium">{task.title}</p>
+                           <Link href={`/tasks/${task.id}`} className="font-medium hover:underline">{task.title}</Link>
                           <p className="text-sm text-muted-foreground">{task.description}</p>
                            <time className="text-xs text-muted-foreground/80">Due: {task.dueDate}</time>
                         </div>

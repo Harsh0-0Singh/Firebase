@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { tasks as initialTasks, Task, TaskStatus } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function EmployeeTasksPage() {
   const employeeName = 'Jane Smith'; // Mocking logged-in employee
@@ -65,7 +66,9 @@ export default function EmployeeTasksPage() {
           <TableBody>
             {tasks.map((task) => (
               <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
+                <TableCell className="font-medium">
+                  <Link href={`/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
+                </TableCell>
                 <TableCell className="text-muted-foreground max-w-sm truncate">{task.description}</TableCell>
                 <TableCell>{task.dueDate}</TableCell>
                 <TableCell>
