@@ -23,7 +23,6 @@ import {
   Tooltip,
 } from "recharts"
 import { tasks } from "@/lib/data"
-import { Chatbot } from "@/components/chatbot"
 
 const chartData = [
   { month: "January", completed: 186 },
@@ -55,7 +54,6 @@ export default function ManagerDashboard() {
             Overview of team performance and project status.
           </p>
         </div>
-        <Chatbot />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
