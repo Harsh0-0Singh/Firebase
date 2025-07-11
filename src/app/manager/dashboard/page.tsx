@@ -25,6 +25,7 @@ import {
 import { tasks, Task } from "@/lib/data"
 import { addDays, isSameDay, isToday, parseISO } from 'date-fns';
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const chartData = [
   { month: "January", completed: 186 },
@@ -73,25 +74,23 @@ export default function ManagerDashboard() {
     }
   }, [date]);
 
-  const DayWithTasks = ({ date }: { date: Date }) => {
+  const DayWithTasks = ({ date, selected }: { date: Date, selected: boolean | undefined }) => {
     const dateString = date.toISOString().split('T')[0];
     const dayTasks = tasksByDate[dateString] || [];
     const taskCount = dayTasks.length;
 
     let colorClass = "";
-    if (taskCount > 0) {
-      if (taskCount >= 3) colorClass = "bg-red-200 dark:bg-red-800";
-      else if (taskCount >= 2) colorClass = "bg-yellow-200 dark:bg-yellow-800";
-      else colorClass = "bg-green-200 dark:bg-green-800";
+    if (taskCount > 0 && !selected) {
+      if (taskCount >= 3) colorClass = "bg-red-100 dark:bg-red-900/50";
+      else if (taskCount >= 2) colorClass = "bg-yellow-100 dark:bg-yellow-900/50";
+      else colorClass = "bg-green-100 dark:bg-green-900/50";
     }
 
     return (
-      <div className={`relative h-full w-full flex items-center justify-center rounded-md ${colorClass}`}>
+      <div className={cn("relative h-full w-full flex items-center justify-center rounded-md", colorClass)}>
         <span>{date.getDate()}</span>
         {taskCount > 0 && 
-            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                {taskCount}
-            </div>
+            <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
         }
       </div>
     );
@@ -189,7 +188,7 @@ export default function ManagerDashboard() {
               onSelect={setDate}
               className="p-0"
               components={{
-                Day: ({ date }) => <DayWithTasks date={date} />,
+                Day: ({ date }) => <DayWithTasks date={date} selected={date ? isSameDay(date, date) : false} />,
               }}
               classNames={{
                 head_cell: "w-full",
