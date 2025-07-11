@@ -20,18 +20,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronsUpDown } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 
 export default function TaskRequestsPage() {
   const [requests, setRequests] = useState(taskRequests);
-  const [selectedAssignee, setSelectedAssignee] = useState<string>('');
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const { toast } = useToast();
   
   const handleApprove = (requestId: string) => {
-    if (!selectedAssignee) {
+    if (selectedAssignees.length === 0) {
       toast({
         title: 'Error',
-        description: 'Please select an employee to assign the task.',
+        description: 'Please select at least one employee to assign the task.',
         variant: 'destructive',
       });
       return;
@@ -42,9 +46,9 @@ export default function TaskRequestsPage() {
     
     toast({
       title: 'Task Approved!',
-      description: `The request has been approved and assigned to an employee.`,
+      description: `The request has been approved and assigned.`,
     });
-    setSelectedAssignee('');
+    setSelectedAssignees([]);
   };
 
   const handleReject = (requestId: string) => {
@@ -89,16 +93,42 @@ export default function TaskRequestsPage() {
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2 w-full">
                         <span className="text-sm font-medium">Assign to:</span>
-                        <Select onValueChange={setSelectedAssignee}>
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Select Employee" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {employees.map((e) => (
-                                    <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-[250px] justify-between font-normal h-auto">
+                                  <div className="flex flex-wrap gap-1 items-center">
+                                    {selectedAssignees.length > 0 ? (
+                                        <>
+                                        {selectedAssignees.slice(0, 2).map(name => <Badge key={name} variant="secondary">{name}</Badge>)}
+                                        {selectedAssignees.length > 2 && <Badge variant="outline">+{selectedAssignees.length - 2}</Badge>}
+                                        </>
+                                    ) : "Select Employees"}
+                                  </div>
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0">
+                              <div className="p-2 space-y-1">
+                                {employees.map(e => (
+                                    <div key={e.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent">
+                                        <Checkbox
+                                            id={`req-assignee-${request.id}-${e.id}`}
+                                            checked={selectedAssignees.includes(e.name)}
+                                            onCheckedChange={(checked) => {
+                                                return checked
+                                                    ? setSelectedAssignees([...selectedAssignees, e.name])
+                                                    : setSelectedAssignees(selectedAssignees.filter(name => name !== e.name))
+                                            }}
+                                        />
+                                        <Label htmlFor={`req-assignee-${request.id}-${e.id}`} className="font-normal flex flex-col">
+                                            {e.name}
+                                            <span className="text-xs text-muted-foreground">{e.role}</span>
+                                        </Label>
+                                    </div>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                              </div>
+                          </PopoverContent>
+                       </Popover>
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => handleApprove(request.id)}>Approve</Button>

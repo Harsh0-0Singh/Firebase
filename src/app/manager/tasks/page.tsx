@@ -36,6 +36,9 @@ import { Rating } from '@/components/rating';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronsUpDown, User, X } from 'lucide-react';
 
 export default function ManagerTasksPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -45,7 +48,7 @@ export default function ManagerTasksPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState('');
+  const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
   const [newTaskClient, setNewTaskClient] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
@@ -59,13 +62,13 @@ export default function ManagerTasksPage() {
     setTasks(tasks.map(t => t.id === task.id ? {...t, rating: rating} : t));
     toast({
       title: "Rating Submitted!",
-      description: `You gave ${task.assignee} ${rating} stars for completing "${task.title}".`,
+      description: `You gave the team ${rating} stars for completing "${task.title}".`,
     });
     setRating(0);
   };
 
   const handleCreateTask = () => {
-    if (!newTaskTitle || !newTaskAssignee || !newTaskClient || !newTaskDueDate) {
+    if (!newTaskTitle || newTaskAssignees.length === 0 || !newTaskClient || !newTaskDueDate) {
        toast({
         title: "Error",
         description: "Please fill out all fields to create a task.",
@@ -77,7 +80,7 @@ export default function ManagerTasksPage() {
       id: `T${tasks.length + 1}`,
       title: newTaskTitle,
       description: newTaskDescription,
-      assignee: newTaskAssignee,
+      assignees: newTaskAssignees,
       client: newTaskClient,
       dueDate: format(new Date(newTaskDueDate), 'yyyy-MM-dd'),
       status: 'Pending',
@@ -86,13 +89,13 @@ export default function ManagerTasksPage() {
     setTasks([...tasks, newTask]);
     toast({
       title: "Task Created!",
-      description: `Task "${newTask.title}" has been assigned to ${newTask.assignee}.`
+      description: `Task "${newTask.title}" has been assigned.`
     });
     
     // Reset form
     setNewTaskTitle('');
     setNewTaskDescription('');
-    setNewTaskAssignee('');
+    setNewTaskAssignees([]);
     setNewTaskClient('');
     setNewTaskDueDate('');
     setIsCreateDialogOpen(false);
@@ -138,16 +141,44 @@ export default function ManagerTasksPage() {
                   <Label htmlFor="description" className="text-right">Description</Label>
                   <Textarea id="description" value={newTaskDescription} onChange={e => setNewTaskDescription(e.target.value)} className="col-span-3" />
                 </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="assignee" className="text-right">Assignee</Label>
-                  <Select onValueChange={setNewTaskAssignee} value={newTaskAssignee}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select an employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map(e => <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                 <div className="grid grid-cols-4 items-start gap-4 pt-2">
+                  <Label htmlFor="assignee" className="text-right pt-2">Assignees</Label>
+                   <Popover>
+                      <PopoverTrigger asChild>
+                          <Button variant="outline" className="col-span-3 justify-between font-normal h-auto">
+                              <div className="flex flex-wrap gap-1 items-center">
+                                {newTaskAssignees.length > 0 ? (
+                                    <>
+                                     {newTaskAssignees.slice(0, 2).map(name => <Badge key={name} variant="secondary">{name}</Badge>)}
+                                     {newTaskAssignees.length > 2 && <Badge variant="outline">+{newTaskAssignees.length - 2}</Badge>}
+                                    </>
+                                ) : "Select Employees"}
+                              </div>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                          <div className="p-2 space-y-1">
+                             {employees.map(e => (
+                                <div key={e.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent">
+                                    <Checkbox
+                                        id={`assignee-${e.id}`}
+                                        checked={newTaskAssignees.includes(e.name)}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                                ? setNewTaskAssignees([...newTaskAssignees, e.name])
+                                                : setNewTaskAssignees(newTaskAssignees.filter(name => name !== e.name))
+                                        }}
+                                    />
+                                    <Label htmlFor={`assignee-${e.id}`} className="font-normal flex flex-col">
+                                        {e.name}
+                                        <span className="text-xs text-muted-foreground">{e.role}</span>
+                                    </Label>
+                                </div>
+                            ))}
+                          </div>
+                      </PopoverContent>
+                   </Popover>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="client" className="text-right">Client</Label>
@@ -170,7 +201,7 @@ export default function ManagerTasksPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Task</TableHead>
-              <TableHead>Assignee</TableHead>
+              <TableHead>Assignees</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Status</TableHead>
@@ -181,7 +212,11 @@ export default function ManagerTasksPage() {
             {tasks.map((task) => (
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>{task.assignee}</TableCell>
+                <TableCell>
+                    <div className="flex flex-col gap-1">
+                        {task.assignees.map(assignee => <Badge key={assignee} variant="secondary" className="font-normal w-fit">{assignee}</Badge>)}
+                    </div>
+                </TableCell>
                 <TableCell>{task.client}</TableCell>
                 <TableCell>{task.dueDate}</TableCell>
                 <TableCell>
@@ -214,7 +249,7 @@ export default function ManagerTasksPage() {
                         <DialogHeader>
                           <DialogTitle>Rate Employee Performance</DialogTitle>
                           <DialogDescription>
-                            Task: "{task.title}" by {task.assignee}
+                            Task: "{task.title}" by {task.assignees.join(', ')}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="flex justify-center py-4">

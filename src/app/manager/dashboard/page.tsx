@@ -161,7 +161,7 @@ export default function ManagerDashboard() {
                         <li key={task.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
                             <div>
                                 <p className="font-medium">{task.title}</p>
-                                <p className="text-sm text-muted-foreground">{task.assignee}</p>
+                                <p className="text-sm text-muted-foreground">{task.assignees.join(', ')}</p>
                             </div>
                             <Badge variant={task.status === "Completed" ? "default" : "secondary"}>{task.status}</Badge>
                         </li>
@@ -214,7 +214,7 @@ export default function ManagerDashboard() {
                         {selectedDayTasks.map(task => (
                             <li key={task.id} className="p-3 rounded-lg border bg-card">
                                 <p className="font-semibold">{task.title}</p>
-                                <p className="text-sm text-muted-foreground">Assignee: {task.assignee}</p>
+                                <p className="text-sm text-muted-foreground">Assignees: {task.assignees.join(', ')}</p>
                                 <Badge variant="outline" className="mt-2">{task.status}</Badge>
                             </li>
                         ))}

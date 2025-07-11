@@ -18,7 +18,7 @@ export default function EmployeeProfilePage({ params }: { params: { employeeId: 
     notFound();
   }
 
-  const employeeTasks = tasks.filter((task) => task.assignee === employee.name);
+  const employeeTasks = tasks.filter((task) => task.assignees.includes(employee.name));
   const completedTasks = employeeTasks.filter((task) => task.status === "Completed").length;
   const inProgressTasks = employeeTasks.filter((task) => task.status === "In Progress").length;
   const totalTasks = employeeTasks.length;

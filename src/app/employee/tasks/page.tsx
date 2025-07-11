@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 
 export default function EmployeeTasksPage() {
   const employeeName = 'Jane Smith'; // Mocking logged-in employee
-  const myTasks = initialTasks.filter(task => task.assignee === employeeName);
+  const myTasks = initialTasks.filter(task => task.assignees.includes(employeeName));
   const [tasks, setTasks] = useState<Task[]>(myTasks);
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {

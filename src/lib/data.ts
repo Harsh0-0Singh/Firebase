@@ -11,7 +11,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  assignee: string;
+  assignees: string[];
   dueDate: string;
   status: TaskStatus;
   client: string;
@@ -55,12 +55,12 @@ export const employees: Employee[] = [
 ];
 
 export const tasks: Task[] = [
-  { id: 'T1', title: 'Develop Landing Page', description: 'Create a responsive landing page for Project Alpha.', assignee: 'Jane Smith', dueDate: '2024-08-15', status: 'Completed', client: 'Innovate Corp', rating: 5 },
-  { id: 'T2', title: 'Design Mobile App UI', description: 'Design the main screens for the new mobile app.', assignee: 'Mike Johnson', dueDate: '2024-08-20', status: 'In Progress', client: 'Innovate Corp', rating: 0 },
-  { id: 'T3', title: 'API Integration', description: 'Integrate the new payment gateway API.', assignee: 'Emily Brown', dueDate: '2024-08-25', status: 'In Progress', client: 'Innovate Corp', rating: 0 },
-  { id: 'T4', title: 'User Authentication Flow', description: 'Implement the complete user login and registration flow.', assignee: 'Jane Smith', dueDate: '2024-09-01', status: 'Pending', client: 'Tech Solutions', rating: 0 },
-  { id: 'T5', title: 'Create Marketing Banners', description: 'Design a set of banners for the upcoming campaign.', assignee: 'Mike Johnson', dueDate: '2024-08-18', status: 'Completed', client: 'Tech Solutions', rating: 4 },
-  { id: 'T6', title: 'Database Schema Migration', description: 'Migrate the old database schema to the new version.', assignee: 'Emily Brown', dueDate: '2024-09-05', status: 'Blocked', client: 'Innovate Corp', rating: 0 },
+  { id: 'T1', title: 'Develop Landing Page', description: 'Create a responsive landing page for Project Alpha.', assignees: ['Jane Smith'], dueDate: '2024-08-15', status: 'Completed', client: 'Innovate Corp', rating: 5 },
+  { id: 'T2', title: 'Design Mobile App UI', description: 'Design the main screens for the new mobile app.', assignees: ['Mike Johnson'], dueDate: '2024-08-20', status: 'In Progress', client: 'Innovate Corp', rating: 0 },
+  { id: 'T3', title: 'API Integration', description: 'Integrate the new payment gateway API.', assignees: ['Emily Brown', 'Jane Smith'], dueDate: '2024-08-25', status: 'In Progress', client: 'Innovate Corp', rating: 0 },
+  { id: 'T4', title: 'User Authentication Flow', description: 'Implement the complete user login and registration flow.', assignees: ['Jane Smith'], dueDate: '2024-09-01', status: 'Pending', client: 'Tech Solutions', rating: 0 },
+  { id: 'T5', title: 'Create Marketing Banners', description: 'Design a set of banners for the upcoming campaign.', assignees: ['Mike Johnson'], dueDate: '2024-08-18', status: 'Completed', client: 'Tech Solutions', rating: 4 },
+  { id: 'T6', title: 'Database Schema Migration', description: 'Migrate the old database schema to the new version.', assignees: ['Emily Brown'], dueDate: '2024-09-05', status: 'Blocked', client: 'Innovate Corp', rating: 0 },
 ];
 
 export const reports: Report[] = [

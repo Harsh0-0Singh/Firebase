@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 export default function EmployeeDashboard() {
   const employeeId = '2'; // Mocking logged-in employee as Jane Smith
   const employee = employees.find(e => e.id === employeeId)!;
-  const myTasks = tasks.filter(t => t.assignee === employee.name);
+  const myTasks = tasks.filter(t => t.assignees.includes(employee.name));
   
   const completedTasks = myTasks.filter(t => t.status === "Completed").length;
   const inProgressTasks = myTasks.filter(t => t.status === "In Progress").length;
