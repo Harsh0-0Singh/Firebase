@@ -8,6 +8,7 @@ const navLinks: NavLink[] = [
   { href: "/manager/employees", label: "Employees", icon: "Users" },
   { href: "/manager/clients", label: "Clients", icon: "Briefcase" },
   { href: "/manager/reports", label: "Reports", icon: "FileText" },
+  { href: "/manager/settings", label: "Settings", icon: 'Settings' },
 ];
 
 export default function ManagerLayout({ children }: { children: React.ReactNode }) {

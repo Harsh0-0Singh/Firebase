@@ -51,16 +51,18 @@ export default function ManagerEmployeesPage() {
   const [newRole, setNewRole] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
   const [newEmployeeRole, setNewEmployeeRole] = useState<string>(initialRoles[1]);
+  const [newEmployeeUsername, setNewEmployeeUsername] = useState('');
+  const [newEmployeePassword, setNewEmployeePassword] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const rankedEmployees = [...employees].sort((a, b) => b.points - a.points);
 
   const handleAddEmployee = () => {
-    if (!newEmployeeName.trim()) {
+    if (!newEmployeeName.trim() || !newEmployeeUsername.trim() || !newEmployeePassword.trim()) {
       toast({
         title: "Error",
-        description: "Employee name cannot be empty.",
+        description: "Please fill all employee fields.",
         variant: "destructive"
       });
       return;
@@ -72,6 +74,8 @@ export default function ManagerEmployeesPage() {
       role: newEmployeeRole,
       avatar: 'https://placehold.co/40x40.png',
       points: 0,
+      username: newEmployeeUsername,
+      password: newEmployeePassword
     };
 
     setEmployees([...employees, newEmployee]);
@@ -82,6 +86,8 @@ export default function ManagerEmployeesPage() {
 
     setNewEmployeeName('');
     setNewEmployeeRole(roles[1]);
+    setNewEmployeeUsername('');
+    setNewEmployeePassword('');
     setIsDialogOpen(false);
   };
 
@@ -156,6 +162,31 @@ export default function ManagerEmployeesPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                   <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="username" className="text-right">
+                      Username
+                    </Label>
+                    <Input
+                      id="username"
+                      value={newEmployeeUsername}
+                      onChange={(e) => setNewEmployeeUsername(e.target.value)}
+                      className="col-span-3"
+                      placeholder="e.g. johndoe"
+                    />
+                  </div>
+                   <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="password" className="text-right">
+                      Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={newEmployeePassword}
+                      onChange={(e) => setNewEmployeePassword(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Set an initial password"
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button type="button" onClick={handleAddEmployee}>Save Employee</Button>
@@ -170,6 +201,7 @@ export default function ManagerEmployeesPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Username</TableHead>
                 <TableHead>Points</TableHead>
               </TableRow>
             </TableHeader>
@@ -184,6 +216,7 @@ export default function ManagerEmployeesPage() {
                   <TableCell>
                     <Badge variant="outline">{employee.role}</Badge>
                   </TableCell>
+                  <TableCell>{employee.username}</TableCell>
                   <TableCell>{employee.points}</TableCell>
                 </TableRow>
               ))}

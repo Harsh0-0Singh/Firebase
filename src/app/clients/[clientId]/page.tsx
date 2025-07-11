@@ -6,34 +6,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { tasks } from "@/lib/data";
+import { tasks, clients } from "@/lib/data";
 import { CheckCircle, GanttChartSquare, Globe, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ClientTaskRequestForm } from "./_components/client-task-request-form";
+import { notFound } from "next/navigation";
 
 export default function ClientPortalPage({ params }: { params: { clientId: string } }) {
-  const clientName = "Innovate Corp"; // Mock client name
+  const client = clients.find(c => c.id === params.clientId);
+
+  if (!client) {
+      notFound();
+  }
+
+  const clientName = client.name;
   const clientTasks = tasks.filter((task) => task.client === clientName);
   const completedTasks = clientTasks.filter((task) => task.status === "Completed").length;
   const totalTasks = clientTasks.length;
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <header className="bg-background border-b">
-        <div className="container mx-auto flex justify-between items-center p-4">
-          <div className="flex items-center gap-2">
-            <Globe className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold font-headline">Brands in House</h1>
-          </div>
-          <Link href="/">
-             <Button variant="outline">Back to Home</Button>
-          </Link>
-        </div>
-      </header>
-      
-      <main className="container mx-auto p-4 md:p-8 grid gap-8 lg:grid-cols-3">
+    <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
             <Card>
               <CardHeader>
@@ -75,7 +69,6 @@ export default function ClientPortalPage({ params }: { params: { clientId: strin
         <div>
             <ClientTaskRequestForm />
         </div>
-      </main>
     </div>
   );
 }

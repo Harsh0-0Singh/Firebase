@@ -4,6 +4,7 @@ const navLinks: NavLink[] = [
   { href: "/employee/dashboard", label: "Dashboard", icon: 'LayoutDashboard' },
   { href: "/employee/tasks", label: "My Tasks", icon: 'GanttChartSquare' },
   { href: "/employee/reports/submit", label: "Submit Report", icon: 'FilePenLine' },
+  { href: "/employee/settings", label: "Settings", icon: 'Settings' },
 ];
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {

@@ -8,7 +8,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
@@ -37,11 +36,13 @@ export default function ManagerClientsPage() {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [newClientName, setNewClientName] = useState('');
   const [newClientContact, setNewClientContact] = useState('');
+  const [newClientUsername, setNewClientUsername] = useState('');
+  const [newClientPassword, setNewClientPassword] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAddClient = () => {
-    if (!newClientName.trim() || !newClientContact.trim()) {
+    if (!newClientName.trim() || !newClientContact.trim() || !newClientUsername.trim() || !newClientPassword.trim()) {
       toast({
         title: "Error",
         description: "Please fill out all fields.",
@@ -54,6 +55,8 @@ export default function ManagerClientsPage() {
       id: `C${clients.length + 1}`,
       name: newClientName,
       contactEmail: newClientContact,
+      username: newClientUsername,
+      password: newClientPassword
     };
 
     setClients([...clients, newClient]);
@@ -64,6 +67,8 @@ export default function ManagerClientsPage() {
 
     setNewClientName('');
     setNewClientContact('');
+    setNewClientUsername('');
+    setNewClientPassword('');
     setIsDialogOpen(false);
   };
 
@@ -112,6 +117,31 @@ export default function ManagerClientsPage() {
                     placeholder="e.g. contact@innovate.com"
                   />
                 </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="username" className="text-right">
+                    Username
+                  </Label>
+                  <Input
+                    id="username"
+                    value={newClientUsername}
+                    onChange={(e) => setNewClientUsername(e.target.value)}
+                    className="col-span-3"
+                    placeholder="e.g. innovatecorp"
+                  />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="password" className="text-right">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={newClientPassword}
+                    onChange={(e) => setNewClientPassword(e.target.value)}
+                    className="col-span-3"
+                    placeholder="Set an initial password"
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" onClick={handleAddClient}>Save Client</Button>
@@ -126,6 +156,7 @@ export default function ManagerClientsPage() {
             <TableRow>
               <TableHead>Client Name</TableHead>
               <TableHead>Contact Email</TableHead>
+              <TableHead>Username</TableHead>
               <TableHead className="text-right">Portal Link</TableHead>
             </TableRow>
           </TableHeader>
@@ -134,6 +165,7 @@ export default function ManagerClientsPage() {
               <TableRow key={client.id}>
                 <TableCell className="font-medium">{client.name}</TableCell>
                 <TableCell>{client.contactEmail}</TableCell>
+                <TableCell>{client.username}</TableCell>
                 <TableCell className="text-right">
                   <Button asChild variant="ghost" size="icon">
                     <a href={`/clients/${client.id}`} target="_blank">
