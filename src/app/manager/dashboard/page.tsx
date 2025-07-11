@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -7,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { CheckCircle, Clock, XCircle, ListTodo } from "lucide-react"
+import { CheckCircle, Clock, XCircle, ListTodo, AlertTriangle, Activity } from "lucide-react"
 import {
   ChartContainer,
   ChartTooltip,
@@ -21,7 +22,9 @@ import {
   YAxis,
 } from "recharts"
 import { tasks } from "@/lib/data"
-import { TeamCalendar } from "./_components/team-calendar"
+import { format, isToday, parseISO, isSameDay, compareDesc } from 'date-fns';
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
 
 const chartData = [
@@ -43,7 +46,16 @@ const chartConfig = {
 export default function ManagerDashboard() {
   const completedTasks = tasks.filter(t => t.status === "Completed").length;
   const inProgressTasks = tasks.filter(t => t.status === "In Progress").length;
-  const blockedTasks = tasks.filter(t => t.status === "Blocked").length;
+  const blockedTasks = tasks.filter(t => t.status === "Blocked");
+
+  const today = new Date();
+  const tasksDueToday = tasks.filter(t => isSameDay(parseISO(t.dueDate), today));
+  
+  const recentActivity = tasks
+    .filter(t => t.status === 'Completed')
+    .sort((a, b) => compareDesc(parseISO(a.dueDate), parseISO(b.dueDate)))
+    .slice(0, 5);
+
 
   return (
     <div className="space-y-6">
@@ -89,7 +101,7 @@ export default function ManagerDashboard() {
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{blockedTasks}</div>
+            <div className="text-2xl font-bold">{blockedTasks.length}</div>
             <p className="text-xs text-muted-foreground">
               Needs immediate attention
             </p>
@@ -97,9 +109,57 @@ export default function ManagerDashboard() {
         </Card>
       </div>
       
-       <TeamCalendar />
+      <div className="grid gap-6 lg:grid-cols-2">
+         <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><ListTodo className="text-primary" /> Today's Agenda</CardTitle>
+                <CardDescription>Tasks due today, {format(today, 'PPP')}.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {tasksDueToday.length > 0 ? (
+                    <ul className="space-y-3">
+                        {tasksDueToday.map(task => (
+                             <li key={task.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                <div>
+                                    <Link href={`/tasks/${task.id}`} className="font-medium hover:underline">{task.title}</Link>
+                                    <p className="text-sm text-muted-foreground">{task.assignees.join(', ')}</p>
+                                </div>
+                                <Badge variant="secondary">{task.client}</Badge>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-center text-muted-foreground py-4">No tasks due today.</p>
+                )}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive" /> Action Required</CardTitle>
+                <CardDescription>Tasks that are currently blocked.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {blockedTasks.length > 0 ? (
+                    <ul className="space-y-3">
+                        {blockedTasks.map(task => (
+                            <li key={task.id} className="flex items-center justify-between p-2 rounded-md bg-destructive/10">
+                                <div>
+                                    <Link href={`/tasks/${task.id}`} className="font-medium hover:underline">{task.title}</Link>
+                                    <p className="text-sm text-muted-foreground">{task.assignees.join(', ')}</p>
+                                </div>
+                                <Badge variant="destructive">{task.client}</Badge>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-center text-muted-foreground py-4">No blocked tasks.</p>
+                )}
+            </CardContent>
+        </Card>
+      </div>
 
-       <Card>
+       <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle>Quarterly Progress</CardTitle>
             <CardDescription>
@@ -126,6 +186,30 @@ export default function ManagerDashboard() {
             </ChartContainer>
           </CardContent>
         </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Activity className="text-primary" /> Recent Activity</CardTitle>
+                <CardDescription>Recently completed tasks by the team.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {recentActivity.length > 0 ? (
+                     <ul className="space-y-3">
+                        {recentActivity.map(task => (
+                             <li key={task.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                <div>
+                                    <Link href={`/tasks/${task.id}`} className="font-medium hover:underline">{task.title}</Link>
+                                    <p className="text-sm text-muted-foreground">Completed by {task.assignees.join(', ')}</p>
+                                </div>
+                                <Badge variant="outline" className="text-green-600 border-green-600/50">Completed</Badge>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                     <p className="text-center text-muted-foreground py-4">No recent activity.</p>
+                )}
+            </CardContent>
+        </Card>
+       </div>
     </div>
   )
 }
