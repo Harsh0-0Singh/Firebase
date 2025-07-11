@@ -53,6 +53,12 @@ export default function ManagerResourcesPage() {
     setAssigneeId(request.assignedToId || '');
     setDueDate(request.dueDate ? format(parseISO(request.dueDate), 'yyyy-MM-dd') : '');
   };
+  
+  const handleCloseDialog = () => {
+    setSelectedRequest(null);
+    setAssigneeId('');
+    setDueDate('');
+  }
 
   const handleApproval = () => {
     if (!selectedRequest || !assigneeId || !dueDate) {
@@ -76,7 +82,7 @@ export default function ManagerResourcesPage() {
       description: `${selectedRequest.itemName} for ${selectedRequest.requesterName} has been approved.`
     });
 
-    setSelectedRequest(null);
+    handleCloseDialog();
   };
 
   const handleReject = (requestId: string) => {
@@ -113,68 +119,71 @@ export default function ManagerResourcesPage() {
   const getEmployeeName = (id: string) => employees.find(e => e.id === id)?.name || 'Unknown';
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resource Requests</CardTitle>
-        <CardDescription>
-          Review and manage resource requests from your team.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Requester</TableHead>
-              <TableHead>Item</TableHead>
-              <TableHead>Requested On</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Assigned To</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {requests.map((request) => (
-              <TableRow key={request.id}>
-                <TableCell className="font-medium">{request.requesterName}</TableCell>
-                <TableCell>{request.itemName}</TableCell>
-                <TableCell>{format(parseISO(request.createdAt), 'PPP')}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={cn("text-white", getStatusColor(request.status))}>{request.status}</Badge>
-                </TableCell>
-                <TableCell>{request.assignedToId ? getEmployeeName(request.assignedToId) : 'N/A'}</TableCell>
-                <TableCell>{request.dueDate ? format(parseISO(request.dueDate), 'PPP') : 'N/A'}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  {request.status === 'Pending' && (
-                    <>
-                      <DialogTrigger asChild>
-                        <Button variant="default" size="sm" onClick={() => handleOpenApprovalDialog(request)}>Approve</Button>
-                      </DialogTrigger>
-                      <Button variant="destructive" size="sm" onClick={() => handleReject(request.id)}>Reject</Button>
-                    </>
-                  )}
-                  {request.status === 'Approved' && (
-                     <Button variant="secondary" size="sm" onClick={() => handleComplete(request.id)}>Mark Completed</Button>
-                  )}
-                   {request.status === 'Completed' && (
-                     <span className="text-sm text-muted-foreground">Fulfilled</span>
-                  )}
-                   {request.status === 'Rejected' && (
-                     <span className="text-sm text-destructive">Rejected</span>
-                  )}
-                </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Resource Requests</CardTitle>
+          <CardDescription>
+            Review and manage resource requests from your team.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Requester</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead>Requested On</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Assigned To</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-             {requests.length === 0 && (
-                <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">No resource requests.</TableCell>
+            </TableHeader>
+            <TableBody>
+              {requests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell className="font-medium">{request.requesterName}</TableCell>
+                  <TableCell>{request.itemName}</TableCell>
+                  <TableCell>{format(parseISO(request.createdAt), 'PPP')}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("text-white", getStatusColor(request.status))}>{request.status}</Badge>
+                  </TableCell>
+                  <TableCell>{request.assignedToId ? getEmployeeName(request.assignedToId) : 'N/A'}</TableCell>
+                  <TableCell>{request.dueDate ? format(parseISO(request.dueDate), 'PPP') : 'N/A'}</TableCell>
+                  <TableCell className="text-right space-x-2">
+                    {request.status === 'Pending' && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="default" size="sm" onClick={() => handleOpenApprovalDialog(request)}>Approve</Button>
+                        </DialogTrigger>
+                        <Button variant="destructive" size="sm" onClick={() => handleReject(request.id)}>Reject</Button>
+                      </Dialog>
+                    )}
+                    {request.status === 'Approved' && (
+                      <Button variant="secondary" size="sm" onClick={() => handleComplete(request.id)}>Mark Completed</Button>
+                    )}
+                    {request.status === 'Completed' && (
+                      <span className="text-sm text-muted-foreground">Fulfilled</span>
+                    )}
+                    {request.status === 'Rejected' && (
+                      <span className="text-sm text-destructive">Rejected</span>
+                    )}
+                  </TableCell>
                 </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
+              ))}
+              {requests.length === 0 && (
+                  <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">No resource requests.</TableCell>
+                  </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       {selectedRequest && (
-        <Dialog open={!!selectedRequest} onOpenChange={(isOpen) => !isOpen && setSelectedRequest(null)}>
+        <Dialog open={!!selectedRequest} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
            <DialogContent>
               <DialogHeader>
                 <DialogTitle>Approve Request: {selectedRequest.itemName}</DialogTitle>
@@ -213,12 +222,12 @@ export default function ManagerResourcesPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedRequest(null)}>Cancel</Button>
+                <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
                 <Button onClick={handleApproval}>Approve & Assign</Button>
               </DialogFooter>
             </DialogContent>
         </Dialog>
       )}
-    </Card>
+    </>
   );
 }
