@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,54 +43,47 @@ import { employees as initialEmployees, Employee } from "@/lib/data";
 import { Medal, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { addEmployee } from '@/app/actions/employees';
 
 const initialRoles = ["Manager", "Developer", "Designer"];
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending ? 'Saving...' : 'Save Employee'}
+        </Button>
+    )
+}
 
 export default function ManagerEmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [roles, setRoles] = useState<string[]>(initialRoles);
   const [newRole, setNewRole] = useState('');
-  const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [newEmployeeRole, setNewEmployeeRole] = useState<string>(initialRoles[1]);
-  const [newEmployeeUsername, setNewEmployeeUsername] = useState('');
-  const [newEmployeePassword, setNewEmployeePassword] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const rankedEmployees = [...employees].sort((a, b) => b.points - a.points);
+  
+  const initialState = { message: null, errors: {} };
+  const [state, dispatch] = useFormState(addEmployee, initialState);
 
-  const handleAddEmployee = () => {
-    if (!newEmployeeName.trim() || !newEmployeeUsername.trim() || !newEmployeePassword.trim()) {
+  useEffect(() => {
+    if (state.message?.startsWith('Added employee')) {
+      toast({
+        title: "Employee Added",
+        description: state.message,
+      });
+      setIsDialogOpen(false);
+    } else if (state.message) {
       toast({
         title: "Error",
-        description: "Please fill all employee fields.",
+        description: state.message,
         variant: "destructive"
       });
-      return;
     }
+  }, [state, toast]);
 
-    const newEmployee: Employee = {
-      id: `E${employees.length + 1}`,
-      name: newEmployeeName,
-      role: newEmployeeRole,
-      avatar: 'https://placehold.co/40x40.png',
-      points: 0,
-      username: newEmployeeUsername,
-      password: newEmployeePassword
-    };
-
-    setEmployees([...employees, newEmployee]);
-    toast({
-      title: "Employee Added",
-      description: `${newEmployee.name} has been added to the team.`,
-    });
-
-    setNewEmployeeName('');
-    setNewEmployeeRole(roles[1]);
-    setNewEmployeeUsername('');
-    setNewEmployeePassword('');
-    setIsDialogOpen(false);
-  };
 
   const handleAddRole = () => {
     if (!newRole.trim() || roles.includes(newRole.trim())) {
@@ -130,67 +124,78 @@ export default function ManagerEmployeesPage() {
                 <Button>Add Employee</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add New Employee</DialogTitle>
-                  <DialogDescription>
-                    Enter the details for the new employee. Click save when you're done.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Name
-                    </Label>
-                    <Input
-                      id="name"
-                      value={newEmployeeName}
-                      onChange={(e) => setNewEmployeeName(e.target.value)}
-                      className="col-span-3"
-                      placeholder="e.g. John Doe"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="role" className="text-right">
-                      Role
-                    </Label>
-                     <Select onValueChange={(value: string) => setNewEmployeeRole(value)} defaultValue={newEmployeeRole}>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="username" className="text-right">
-                      Username
-                    </Label>
-                    <Input
-                      id="username"
-                      value={newEmployeeUsername}
-                      onChange={(e) => setNewEmployeeUsername(e.target.value)}
-                      className="col-span-3"
-                      placeholder="e.g. johndoe"
-                    />
-                  </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password" className="text-right">
-                      Password
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={newEmployeePassword}
-                      onChange={(e) => setNewEmployeePassword(e.target.value)}
-                      className="col-span-3"
-                      placeholder="Set an initial password"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" onClick={handleAddEmployee}>Save Employee</Button>
-                </DialogFooter>
+                <form action={dispatch}>
+                    <DialogHeader>
+                      <DialogTitle>Add New Employee</DialogTitle>
+                      <DialogDescription>
+                        Enter the details for the new employee. Click save when you're done.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                          Name
+                        </Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          className="col-span-3"
+                          placeholder="e.g. John Doe"
+                          aria-describedby="name-error"
+                        />
+                      </div>
+                      <div id="name-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.name && state.errors.name.map((error: string) => <p className="mt-2 text-sm text-destructive text-right col-span-4" key={error}>{error}</p>)}
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="role" className="text-right">
+                          Role
+                        </Label>
+                         <Select name="role" defaultValue={initialRoles[1]}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="username" className="text-right">
+                          Username
+                        </Label>
+                        <Input
+                          id="username"
+                          name="username"
+                          className="col-span-3"
+                          placeholder="e.g. johndoe"
+                           aria-describedby="username-error"
+                        />
+                      </div>
+                       <div id="username-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.username && state.errors.username.map((error: string) => <p className="mt-2 text-sm text-destructive text-right col-span-4" key={error}>{error}</p>)}
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password" className="text-right">
+                          Password
+                        </Label>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          className="col-span-3"
+                          placeholder="Set an initial password"
+                           aria-describedby="password-error"
+                        />
+                      </div>
+                      <div id="password-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.password && state.errors.password.map((error: string) => <p className="mt-2 text-sm text-destructive text-right col-span-4" key={error}>{error}</p>)}
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <SubmitButton />
+                    </DialogFooter>
+                </form>
               </DialogContent>
             </Dialog>
           </div>
