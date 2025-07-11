@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,40 @@ import { Megaphone, Send } from 'lucide-react';
 
 interface TeamChatProps {
     userId: string;
+}
+
+function FormattedTime({ timestamp }: { timestamp: string }) {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const timeAgo = isClient ? formatDistanceToNow(parseISO(timestamp), { addSuffix: true }) : '';
+    const fullDate = isClient ? format(parseISO(timestamp), 'PPpp') : '';
+
+    return (
+        <time className="text-xs text-muted-foreground" title={fullDate}>
+            {timeAgo}
+        </time>
+    );
+}
+
+function FormattedNotificationTime({ timestamp }: { timestamp: string }) {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const timeAgo = isClient ? formatDistanceToNow(parseISO(timestamp), { addSuffix: true }) : '';
+    const fullDate = isClient ? format(parseISO(timestamp), 'PPpp') : '';
+
+    return (
+         <time className="ml-2" title={fullDate}>
+            {timeAgo}
+        </time>
+    )
 }
 
 export function TeamChat({ userId }: TeamChatProps) {
@@ -55,9 +90,7 @@ export function TeamChat({ userId }: TeamChatProps) {
                                 View Task
                             </Link>
                         )}
-                        <time className="ml-2" title={format(parseISO(message.timestamp), 'PPpp')}>
-                           {formatDistanceToNow(parseISO(message.timestamp), { addSuffix: true })}
-                        </time>
+                        <FormattedNotificationTime timestamp={message.timestamp} />
                     </div>
                 </div>
             )
@@ -73,9 +106,7 @@ export function TeamChat({ userId }: TeamChatProps) {
                 <div>
                     <div className="flex items-baseline gap-2">
                         <p className="font-semibold text-sm">{author.name}</p>
-                        <time className="text-xs text-muted-foreground" title={format(parseISO(message.timestamp), 'PPpp')}>
-                            {formatDistanceToNow(parseISO(message.timestamp), { addSuffix: true })}
-                        </time>
+                        <FormattedTime timestamp={message.timestamp} />
                     </div>
                     <p className="text-sm text-foreground bg-muted p-2 rounded-lg">{message.content}</p>
                 </div>
