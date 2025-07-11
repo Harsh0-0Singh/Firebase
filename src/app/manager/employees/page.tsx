@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -163,7 +164,11 @@ export default function ManagerEmployeesPage() {
             <TableBody>
               {employees.map((employee) => (
                 <TableRow key={employee.id}>
-                  <TableCell className="font-medium">{employee.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/manager/employees/${employee.id}`} className="hover:underline">
+                      {employee.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline">{employee.role}</Badge>
                   </TableCell>
