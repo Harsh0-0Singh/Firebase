@@ -31,14 +31,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { tasks as initialTasks, employees, Task, TaskStatus } from "@/lib/data";
+import { tasks as initialTasks, employees, Task, TaskStatus, clients } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronsUpDown, User, X } from 'lucide-react';
+import { ChevronsUpDown } from 'lucide-react';
 
 export default function ManagerTasksPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -125,7 +125,7 @@ export default function ManagerTasksPage() {
             <DialogTrigger asChild>
               <Button>Create Task</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[480px]">
               <DialogHeader>
                 <DialogTitle>Create a New Task</DialogTitle>
                 <DialogDescription>
@@ -142,7 +142,7 @@ export default function ManagerTasksPage() {
                   <Textarea id="description" value={newTaskDescription} onChange={e => setNewTaskDescription(e.target.value)} className="col-span-3" />
                 </div>
                  <div className="grid grid-cols-4 items-start gap-4 pt-2">
-                  <Label htmlFor="assignee" className="text-right pt-2">Assignees</Label>
+                  <Label className="text-right pt-2">Assignees</Label>
                    <Popover>
                       <PopoverTrigger asChild>
                           <Button variant="outline" className="col-span-3 justify-between font-normal h-auto">
@@ -170,7 +170,7 @@ export default function ManagerTasksPage() {
                                                 : setNewTaskAssignees(newTaskAssignees.filter(name => name !== e.name))
                                         }}
                                     />
-                                    <Label htmlFor={`assignee-${e.id}`} className="font-normal flex flex-col">
+                                    <Label htmlFor={`assignee-${e.id}`} className="font-normal flex flex-col w-full cursor-pointer">
                                         {e.name}
                                         <span className="text-xs text-muted-foreground">{e.role}</span>
                                     </Label>
@@ -182,7 +182,16 @@ export default function ManagerTasksPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="client" className="text-right">Client</Label>
-                  <Input id="client" value={newTaskClient} onChange={e => setNewTaskClient(e.target.value)} className="col-span-3" placeholder="e.g. Innovate Corp" />
+                   <Select onValueChange={setNewTaskClient} value={newTaskClient}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map(client => (
+                            <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="dueDate" className="text-right">Due Date</Label>
@@ -245,7 +254,7 @@ export default function ManagerTasksPage() {
                           {task.rating > 0 ? `Rated ${task.rating}/5` : 'Rate'}
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="sm:max-w-xs">
                         <DialogHeader>
                           <DialogTitle>Rate Employee Performance</DialogTitle>
                           <DialogDescription>
