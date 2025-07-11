@@ -1,5 +1,11 @@
 export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Blocked";
-export type EmployeeRole = "Manager" | "Developer" | "Designer";
+export type EmployeeRole = string;
+
+export interface Client {
+    id: string;
+    name: string;
+    contactEmail: string;
+}
 
 export interface Task {
   id: string;
@@ -27,6 +33,20 @@ export interface Report {
   content: string;
 }
 
+export interface TaskRequest {
+    id: string;
+    title: string;
+    description: string;
+    client: string;
+    status: 'Pending' | 'Approved' | 'Rejected';
+}
+
+
+export const clients: Client[] = [
+    { id: '1', name: 'Innovate Corp', contactEmail: 'contact@innovate.com' },
+    { id: '2', name: 'Tech Solutions', contactEmail: 'hello@techsolutions.io' },
+];
+
 export const employees: Employee[] = [
   { id: '1', name: 'Alex Doe', role: 'Manager', avatar: 'https://placehold.co/40x40.png', points: 0, },
   { id: '2', name: 'Jane Smith', role: 'Developer', avatar: 'https://placehold.co/40x40.png', points: 125, },
@@ -47,4 +67,10 @@ export const reports: Report[] = [
     { id: 'R1', employeeId: '2', date: '2024-08-01', content: 'Completed the initial setup for the landing page project. All base components are now in place. Ready to start on the main hero section tomorrow.' },
     { id: 'R2', employeeId: '3', date: '2024-08-01', content: 'Finalized the wireframes for the mobile app. Shared with the team for feedback. Will start working on high-fidelity mockups based on the feedback received.' },
     { id: 'R3', employeeId: '4', date: '2024-08-01', content: 'Began research on the payment gateway API documentation. Identified potential challenges with the authentication method. Will discuss with the team in the next meeting.' },
+];
+
+export const taskRequests: TaskRequest[] = [
+    { id: 'REQ1', title: 'Add Dark Mode to Client Portal', description: 'Our team would love to have a dark mode option in the portal for better viewing at night.', client: 'Innovate Corp', status: 'Pending' },
+    { id: 'REQ2', title: 'Export Data as CSV', description: 'We need a feature to export the task list as a CSV file for our internal records.', client: 'Tech Solutions', status: 'Pending' },
+    { id: 'REQ3', title: 'Update Company Logo', description: 'We have rebranded and need to update our logo across the platform.', client: 'Innovate Corp', status: 'Pending' },
 ];

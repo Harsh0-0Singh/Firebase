@@ -37,12 +37,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { employees as initialEmployees, Employee, EmployeeRole } from "@/lib/data";
+import { employees as initialEmployees, Employee } from "@/lib/data";
+
+const initialRoles = ["Manager", "Developer", "Designer"];
 
 export default function ManagerEmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [roles, setRoles] = useState<string[]>(initialRoles);
+  const [newRole, setNewRole] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [newEmployeeRole, setNewEmployeeRole] = useState<EmployeeRole>('Developer');
+  const [newEmployeeRole, setNewEmployeeRole] = useState<string>(initialRoles[1]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -70,15 +74,32 @@ export default function ManagerEmployeesPage() {
       description: `${newEmployee.name} has been added to the team.`,
     });
 
-    // Reset form and close dialog
     setNewEmployeeName('');
-    setNewEmployeeRole('Developer');
+    setNewEmployeeRole(roles[1]);
     setIsDialogOpen(false);
   };
 
+  const handleAddRole = () => {
+    if (!newRole.trim() || roles.includes(newRole.trim())) {
+      toast({
+        title: "Error",
+        description: newRole.trim() ? "This role already exists." : "Role name cannot be empty.",
+        variant: "destructive"
+      });
+      return;
+    }
+    const updatedRoles = [...roles, newRole.trim()];
+    setRoles(updatedRoles);
+    setNewRole('');
+    toast({
+      title: 'Role Added',
+      description: `The role "${newRole.trim()}" has been successfully added.`
+    });
+  }
+
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="grid gap-6 lg:grid-cols-3">
+      <Card className="lg:col-span-2">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
@@ -113,14 +134,12 @@ export default function ManagerEmployeesPage() {
                     <Label htmlFor="role" className="text-right">
                       Role
                     </Label>
-                     <Select onValueChange={(value: EmployeeRole) => setNewEmployeeRole(value)} defaultValue={newEmployeeRole}>
+                     <Select onValueChange={(value: string) => setNewEmployeeRole(value)} defaultValue={newEmployeeRole}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Manager">Manager</SelectItem>
-                        <SelectItem value="Developer">Developer</SelectItem>
-                        <SelectItem value="Designer">Designer</SelectItem>
+                        {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -154,6 +173,32 @@ export default function ManagerEmployeesPage() {
             </TableBody>
           </Table>
         </CardContent>
+      </Card>
+      <Card>
+          <CardHeader>
+              <CardTitle>Manage Roles</CardTitle>
+              <CardDescription>Add new job roles and designations.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="space-y-4">
+                  <div className="flex gap-2">
+                      <Input 
+                          placeholder="New role name..."
+                          value={newRole}
+                          onChange={(e) => setNewRole(e.target.value)}
+                      />
+                      <Button onClick={handleAddRole}>Add</Button>
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Existing Roles</Label>
+                      <div className="flex flex-wrap gap-2">
+                          {roles.map(role => (
+                              <Badge key={role} variant="secondary">{role}</Badge>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          </CardContent>
       </Card>
     </div>
   );
