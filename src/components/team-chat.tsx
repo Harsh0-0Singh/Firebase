@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,7 @@ import { Message, ChatMessage, NotificationMessage, Employee } from "@/lib/data"
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import Link from 'next/link';
 import { Megaphone, Send } from 'lucide-react';
-import EmployeeModel from '@/models/Employee';
-import MessageModel from '@/models/Message';
+import { getChatData, postChatMessage } from '@/app/actions/chat';
 
 interface TeamChatProps {
     userId: string;
@@ -52,51 +51,32 @@ function FormattedNotificationTime({ timestamp }: { timestamp: string }) {
     )
 }
 
-// A helper function to fetch data and stringify it
-async function getEmployees() {
-  try {
-    const employees = await EmployeeModel.find({}).lean();
-    return JSON.parse(JSON.stringify(employees));
-  } catch (error) {
-    console.error("Failed to fetch employees", error);
-    return [];
-  }
-}
-
-async function getMessages() {
-  try {
-    const messages = await MessageModel.find({}).sort({ timestamp: 'asc' }).lean();
-    return JSON.parse(JSON.stringify(messages));
-  } catch (error) {
-    console.error("Failed to fetch messages", error);
-    return [];
-  }
-}
-
 export function TeamChat({ userId }: TeamChatProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [isPending, startTransition] = useTransition();
+
     const currentUser = employees.find(e => e.id === userId);
 
-    useEffect(() => {
-      async function loadData() {
-        const [messagesData, employeesData] = await Promise.all([
-          getMessages(),
-          getEmployees(),
-        ]);
-        setMessages(messagesData);
-        setEmployees(employeesData);
-      }
-      loadData();
+    const loadData = useCallback(() => {
+        startTransition(async () => {
+            const { messages: messagesData, employees: employeesData } = await getChatData();
+            setMessages(messagesData);
+            setEmployees(employeesData);
+        });
     }, []);
+
+    useEffect(() => {
+      loadData();
+    }, [loadData]);
 
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !currentUser) return;
 
         const chatMessage: ChatMessage = {
-            id: `M${messages.length + Math.floor(Math.random() * 1000)}`,
+            id: `M${Date.now()}${Math.floor(Math.random() * 1000)}`,
             type: 'chat',
             authorId: currentUser.id,
             content: newMessage.trim(),
@@ -104,19 +84,17 @@ export function TeamChat({ userId }: TeamChatProps) {
         };
         
         // Optimistically update UI
-        setMessages([...messages, chatMessage]);
+        setMessages(prev => [...prev, chatMessage]);
         setNewMessage('');
         
-        // Save to DB
-        try {
-            const messageDoc = new MessageModel(chatMessage);
-            await messageDoc.save();
-        } catch (error) {
-            console.error("Failed to save message", error);
-            // Optionally rollback UI update
-            setMessages(messages.filter(m => m.id !== chatMessage.id));
-        }
+        // Save to DB via server action
+        const result = await postChatMessage(chatMessage);
 
+        if (!result.success) {
+            console.error(result.error);
+            // Rollback UI update on failure
+            setMessages(prev => prev.filter(m => m.id !== chatMessage.id));
+        }
     };
 
     const getAuthor = (authorId: string) => {
@@ -187,8 +165,9 @@ export function TeamChat({ userId }: TeamChatProps) {
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                        disabled={isPending}
                     />
-                    <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                    <Button onClick={handleSendMessage} disabled={!newMessage.trim() || isPending}>
                         <Send className="h-4 w-4" />
                         <span className="sr-only">Send</span>
                     </Button>

@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -47,13 +48,18 @@ const chartConfig = {
 
 async function getTasks() {
     try {
-        const tasks = await TaskModel.find({}).lean();
-        return JSON.parse(JSON.stringify(tasks));
+        const response = await fetch('/api/tasks');
+        if (!response.ok) {
+            throw new Error('Failed to fetch tasks');
+        }
+        const tasks = await response.json();
+        return tasks;
     } catch (error) {
         console.error("Failed to fetch tasks", error);
         return [];
     }
 }
+
 
 export default function ManagerDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
