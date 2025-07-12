@@ -4,23 +4,41 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { employees, tasks } from "@/lib/data";
+import EmployeeModel from "@/models/Employee";
+import TaskModel from "@/models/Task";
 import { cn } from "@/lib/utils";
-import { CheckCircle, Clock, Star, TrendingUp, User } from "lucide-react";
+import { CheckCircle, Clock, Star, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Rating } from "@/components/rating";
+import connectDB from "@/lib/mongoose";
+import type { Task } from "@/lib/data";
 
-export default function EmployeeProfilePage({ params }: { params: { employeeId: string } }) {
-  const employee = employees.find((e) => e.id === params.employeeId);
+async function getEmployeeData(employeeId: string) {
+    await connectDB();
+    const employee = await EmployeeModel.findOne({ id: employeeId }).lean();
+    if (!employee) {
+        return null;
+    }
+    const tasks = await TaskModel.find({ assignees: employee.name }).lean();
+    return {
+        employee: JSON.parse(JSON.stringify(employee)),
+        tasks: JSON.parse(JSON.stringify(tasks)),
+    }
+}
 
-  if (!employee) {
+
+export default async function EmployeeProfilePage({ params }: { params: { employeeId: string } }) {
+  const data = await getEmployeeData(params.employeeId);
+
+  if (!data) {
     notFound();
   }
+  
+  const { employee, tasks: employeeTasks } = data;
 
-  const employeeTasks = tasks.filter((task) => task.assignees.includes(employee.name));
-  const completedTasks = employeeTasks.filter((task) => task.status === "Completed").length;
-  const inProgressTasks = employeeTasks.filter((task) => task.status === "In Progress").length;
+  const completedTasks = employeeTasks.filter((task: Task) => task.status === "Completed").length;
+  const inProgressTasks = employeeTasks.filter((task: Task) => task.status === "In Progress").length;
   const totalTasks = employeeTasks.length;
 
   const getStatusColor = (status: string) => {
@@ -112,7 +130,7 @@ export default function EmployeeProfilePage({ params }: { params: { employeeId: 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {employeeTasks.length > 0 ? employeeTasks.map(task => (
+                  {employeeTasks.length > 0 ? employeeTasks.map((task: Task) => (
                     <TableRow key={task.id}>
                       <TableCell className="font-medium">
                          <Link href={`/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
