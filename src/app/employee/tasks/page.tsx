@@ -1,7 +1,6 @@
 
 'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -23,19 +22,31 @@ import { type Task, type TaskStatus } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { updateTaskStatusForEmployee } from '@/app/actions/tasks';
+import { useToast } from '@/hooks/use-toast';
 
-export default function EmployeeTasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+interface EmployeeTasksPageContentProps {
+    initialTasks: Task[];
+}
 
-  useEffect(() => {
-    // Data fetching logic will go here
-  }, []);
+function EmployeeTasksPageContent({ initialTasks }: EmployeeTasksPageContentProps) {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const { toast } = useToast();
 
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    // Update logic will go here, calling a server action
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    const originalTasks = [...tasks];
+    // Optimistically update the UI
     setTasks(tasks.map(task => 
       task.id === taskId ? { ...task, status: newStatus } : task
     ));
+    
+    // Call server action
+    const result = await updateTaskStatusForEmployee(taskId, newStatus);
+    if (!result.success) {
+      toast({ title: "Error", description: result.error, variant: 'destructive' });
+      // Revert UI on failure
+      setTasks(originalTasks);
+    }
   };
 
   const getStatusColor = (status: TaskStatus) => {
@@ -100,9 +111,40 @@ export default function EmployeeTasksPage() {
                 </TableCell>
               </TableRow>
             ))}
+             {tasks.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">You have no tasks assigned.</TableCell>
+                </TableRow>
+             )}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
   );
+}
+
+import connectDB from "@/lib/mongoose";
+import EmployeeModel from "@/models/Employee";
+import TaskModel from "@/models/Task";
+import { notFound } from "next/navigation";
+
+async function getEmployeeTasks(employeeId: string) {
+    await connectDB();
+    const employee = await EmployeeModel.findOne({ id: employeeId }).lean();
+    if (!employee) {
+        return null;
+    }
+    const tasks = await TaskModel.find({ assignees: employee.name }).lean();
+    return JSON.parse(JSON.stringify(tasks)) as Task[];
+}
+
+
+export default async function EmployeeTasksPage({ params }: { params: { employeeId: string }}) {
+    const tasks = await getEmployeeTasks(params.employeeId);
+
+    if (tasks === null) {
+        notFound();
+    }
+    
+    return <EmployeeTasksPageContent initialTasks={tasks} />;
 }

@@ -1,5 +1,4 @@
 
-'use client';
 import {
   Card,
   CardContent,
@@ -23,23 +22,33 @@ import Link from 'next/link';
 import { Star, CheckCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TeamChat } from "@/components/team-chat";
-import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
+import connectDB from "@/lib/mongoose";
+import EmployeeModel from "@/models/Employee";
+import TaskModel from "@/models/Task";
 
-// Mocking employee and tasks, replace with data fetching
-const employeeId = '2'; 
+async function getEmployeeData(employeeId: string) {
+    await connectDB();
+    const employee = await EmployeeModel.findOne({ id: employeeId }).lean();
+    if (!employee) {
+        return null;
+    }
+    const tasks = await TaskModel.find({ assignees: employee.name }).lean();
+    return {
+        employee: JSON.parse(JSON.stringify(employee)) as Employee,
+        tasks: JSON.parse(JSON.stringify(tasks)) as Task[],
+    }
+}
 
-export default function EmployeeDashboard() {
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [myTasks, setMyTasks] = useState<Task[]>([]);
 
-  useEffect(() => {
-    // This is where you would fetch your data in a real app
-    // For now, we'll keep it empty and rely on future DB integration.
-  }, []);
+export default async function EmployeeDashboard({ params }: { params: { employeeId: string } }) {
+  const data = await getEmployeeData(params.employeeId);
 
-  if (!employee) {
-    return <div>Loading...</div>; // Or a proper loading skeleton
+  if (!data) {
+    notFound();
   }
+
+  const { employee, tasks: myTasks } = data;
   
   const completedTasks = myTasks.filter(t => t.status === "Completed").length;
   const inProgressTasks = myTasks.filter(t => t.status === "In Progress").length;
@@ -104,7 +113,7 @@ export default function EmployeeDashboard() {
                 <CardTitle>My Active Tasks</CardTitle>
                 <CardDescription>Here are your tasks that are not yet completed.</CardDescription>
               </div>
-              <Link href="/employee/tasks" passHref>
+              <Link href={`/employee/${params.employeeId}/tasks`} passHref>
                   <Button variant="outline">View All Tasks</Button>
               </Link>
             </div>
@@ -122,13 +131,20 @@ export default function EmployeeDashboard() {
                     <TableBody>
                       {myTasks.filter(t => t.status !== 'Completed').slice(0, 3).map(task => (
                         <TableRow key={task.id}>
-                          <TableCell className="font-medium">{task.title}</TableCell>
+                          <TableCell className="font-medium">
+                            <Link href={`/tasks/${task.id}`}>{task.title}</Link>
+                          </TableCell>
                           <TableCell>{task.dueDate}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={cn("text-white", getStatusColor(task.status))}>{task.status}</Badge>
                           </TableCell>
                         </TableRow>
                       ))}
+                      {myTasks.filter(t => t.status !== 'Completed').length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={3} className="text-center h-24">No active tasks.</TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
              </div>
@@ -136,7 +152,7 @@ export default function EmployeeDashboard() {
         </Card>
       </div>
       <div className="lg:col-span-1">
-        <TeamChat userId={employeeId} />
+        <TeamChat userId={params.employeeId} />
       </div>
     </div>
   );

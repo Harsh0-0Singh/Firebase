@@ -31,6 +31,19 @@ export async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
     }
 }
 
+export async function updateTaskStatusForEmployee(taskId: string, newStatus: TaskStatus) {
+    try {
+        await connectDB();
+        await TaskModel.findOneAndUpdate({ id: taskId }, { status: newStatus });
+        revalidatePath('/employee/[employeeId]/tasks', 'page');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update task status", error);
+        return { success: false, error: 'Failed to update status' };
+    }
+}
+
+
 export async function submitTaskRating(taskId: string, rating: number, title: string) {
      try {
         await connectDB();

@@ -1,21 +1,21 @@
 
-'use client';
-
 import { ProfileForm } from "@/components/profile-form";
 import type { Employee } from "@/lib/data";
-import { useEffect, useState } from "react";
+import connectDB from "@/lib/mongoose";
+import EmployeeModel from "@/models/Employee";
+import { notFound } from "next/navigation";
 
-export default function EmployeeSettingsPage() {
-  const [employee, setEmployee] = useState<Employee | null>(null);
+async function getEmployee(employeeId: string): Promise<Employee | null> {
+  await connectDB();
+  const employee = await EmployeeModel.findOne({ id: employeeId }).lean();
+  return employee ? JSON.parse(JSON.stringify(employee)) : null;
+}
 
-  useEffect(() => {
-    // In a real app, this would come from session/auth context.
-    // Fetch employee data here. For now, it's null.
-  }, []);
-  
+export default async function EmployeeSettingsPage({ params }: { params: { employeeId: string } }) {
+  const employee = await getEmployee(params.employeeId);
 
   if (!employee) {
-    return <div>Loading employee data...</div>
+    notFound();
   }
 
   return <ProfileForm user={employee} userType="Employee" />;
