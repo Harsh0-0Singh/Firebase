@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -8,11 +9,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { tasks, employees, clients } from "@/lib/data";
 import { TeamPerformanceChart } from "./_components/team-performance-chart";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import type { Task, Employee, Client } from "@/lib/data";
 
 export default function ReportsPage() {
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
+
+    useEffect(() => {
+        // Fetch data here
+    }, []);
+
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(t => t.status === 'Completed').length;
     const overallCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;

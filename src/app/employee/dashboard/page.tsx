@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -17,16 +18,28 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { tasks, employees } from "@/lib/data";
+import { type Employee, type Task } from "@/lib/data";
 import Link from 'next/link';
 import { Star, CheckCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { TeamChat } from "@/components/team-chat";
+import { useEffect, useState } from "react";
+
+// Mocking employee and tasks, replace with data fetching
+const employeeId = '2'; 
 
 export default function EmployeeDashboard() {
-  const employeeId = '2'; // Mocking logged-in employee as Jane Smith
-  const employee = employees.find(e => e.id === employeeId)!;
-  const myTasks = tasks.filter(t => t.assignees.includes(employee.name));
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [myTasks, setMyTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    // This is where you would fetch your data in a real app
+    // For now, we'll keep it empty and rely on future DB integration.
+  }, []);
+
+  if (!employee) {
+    return <div>Loading...</div>; // Or a proper loading skeleton
+  }
   
   const completedTasks = myTasks.filter(t => t.status === "Completed").length;
   const inProgressTasks = myTasks.filter(t => t.status === "In Progress").length;
@@ -123,7 +136,7 @@ export default function EmployeeDashboard() {
         </Card>
       </div>
       <div className="lg:col-span-1">
-        <TeamChat userId={employee.id} />
+        <TeamChat userId={employeeId} />
       </div>
     </div>
   );

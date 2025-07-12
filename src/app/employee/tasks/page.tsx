@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -18,17 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { tasks as initialTasks, Task, TaskStatus } from "@/lib/data";
+import { type Task, type TaskStatus } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function EmployeeTasksPage() {
-  const employeeName = 'Jane Smith'; // Mocking logged-in employee
-  const myTasks = initialTasks.filter(task => task.assignees.includes(employeeName));
-  const [tasks, setTasks] = useState<Task[]>(myTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    // Data fetching logic will go here
+  }, []);
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    // Update logic will go here, calling a server action
     setTasks(tasks.map(task => 
       task.id === taskId ? { ...task, status: newStatus } : task
     ));

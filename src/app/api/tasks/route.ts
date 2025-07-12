@@ -1,15 +1,3 @@
 
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
-import Task from '@/models/Task';
-
-export async function GET() {
-  await connectDB();
-  try {
-    const tasks = await Task.find({});
-    return NextResponse.json(tasks);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Error fetching tasks' }, { status: 500 });
-  }
-}
+// This file is no longer needed and can be deleted.
+// Data fetching is now handled directly in Server Components.

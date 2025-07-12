@@ -1,14 +1,21 @@
 import { AppLayout, type NavLink } from "@/components/app-layout";
-import { clients } from "@/lib/data";
+import ClientModel from "@/models/Client";
+import connectDB from "@/lib/mongoose";
 
-export default function ClientLayout({ 
+async function getClient(clientId: string) {
+    await connectDB();
+    const client = await ClientModel.findOne({ id: clientId }).lean();
+    return client ? JSON.parse(JSON.stringify(client)) : null;
+}
+
+export default async function ClientLayout({ 
   children,
   params
 }: { 
   children: React.ReactNode,
   params: { clientId: string }
 }) {
-    const client = clients.find(c => c.id === params.clientId);
+    const client = await getClient(params.clientId);
     const clientName = client?.name || "Client";
     
     const navLinks: NavLink[] = [

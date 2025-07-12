@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -37,12 +38,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ResourceRequest, resourceRequests as initialRequests, employees } from "@/lib/data";
+import { type ResourceRequest, type Employee } from "@/lib/data";
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export default function ManagerResourcesPage() {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState<ResourceRequest[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<ResourceRequest | null>(null);
   const [assigneeId, setAssigneeId] = useState('');
   const [dueDate, setDueDate] = useState('');

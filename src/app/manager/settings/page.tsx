@@ -1,11 +1,17 @@
-'use client';
 
 import { ProfileForm } from "@/components/profile-form";
-import { employees } from "@/lib/data";
+import EmployeeModel from "@/models/Employee";
+import connectDB from "@/lib/mongoose";
 
-export default function ManagerSettingsPage() {
-  // Mocking the logged-in manager. In a real app, this would come from session/auth context.
-  const manager = employees.find(e => e.role === 'Manager');
+async function getManager() {
+    await connectDB();
+    const manager = await EmployeeModel.findOne({ role: 'Manager' }).lean();
+    return manager ? JSON.parse(JSON.stringify(manager)) : null;
+}
+
+
+export default async function ManagerSettingsPage() {
+  const manager = await getManager();
 
   if (!manager) {
     return <div>Manager not found.</div>

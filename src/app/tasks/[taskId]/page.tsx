@@ -1,8 +1,5 @@
-'use client';
 
-import { useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { tasks as initialTasks, Task, Comment } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,13 +8,101 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Calendar, User, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
+import connectDB from '@/lib/mongoose';
+import TaskModel from '@/models/Task';
+import type { Task, Comment } from '@/lib/data';
 
-export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
-  const router = useRouter();
-  const [tasks, setTasks] = useState(initialTasks);
-  const task = tasks.find((t) => t.id === params.taskId);
+async function getTask(taskId: string): Promise<Task | null> {
+    await connectDB();
+    const task = await TaskModel.findOne({ id: taskId }).lean();
+    return task ? JSON.parse(JSON.stringify(task)) : null;
+}
 
-  const [newComment, setNewComment] = useState('');
+// A Client Component to handle returning to the previous page.
+function BackButton() {
+    'use client';
+    const router = useRouter();
+    return (
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-5 w-5" />
+        </Button>
+    )
+}
+
+// A Client Component for the comment section
+function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRole: (role:string) => string }) {
+    'use client';
+    const [newComment, setNewComment] = useState('');
+    const [comments, setComments] = useState(task.comments);
+
+    const handleAddComment = () => {
+        if (!newComment.trim()) return;
+
+        const comment: Comment = {
+            id: `C${task.comments.length + 1}`,
+            authorName: 'Alex Doe', // Mock current user
+            authorRole: 'Manager', // Mock current user role
+            content: newComment,
+            timestamp: new Date().toISOString(),
+        };
+        // TODO: This should call a server action to save the comment
+        setComments([...comments, comment]);
+        setNewComment('');
+    };
+
+    return (
+         <Card>
+            <CardHeader>
+                <CardTitle>Comments & Discussion</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-4">
+                    {comments.map(comment => (
+                        <div key={comment.id} className="flex gap-3">
+                            <Avatar>
+                                <AvatarImage src={getAvatarForRole(comment.authorRole)} />
+                                <AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 bg-muted/50 p-3 rounded-lg">
+                                <div className="flex justify-between items-center mb-1">
+                                    <p className="font-semibold">
+                                        {comment.authorName}
+                                        <Badge variant="outline" className="ml-2 text-xs">{comment.authorRole}</Badge>
+                                    </p>
+                                    <time className="text-xs text-muted-foreground">
+                                        {format(parseISO(comment.timestamp), 'PPp')}
+                                    </time>
+                                </div>
+                                <p className="text-sm text-foreground">{comment.content}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+            <CardFooter>
+                <div className="w-full flex gap-3">
+                     <Avatar>
+                        <AvatarImage src={getAvatarForRole('Manager')} />
+                        <AvatarFallback>A</AvatarFallback>
+                    </Avatar>
+                    <div className="w-full space-y-2">
+                        <Textarea 
+                            placeholder="Add a comment..." 
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                        />
+                        <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                            Post Comment
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
+        </Card>
+    )
+}
+
+export default async function TaskDetailPage({ params }: { params: { taskId: string } }) {
+  const task = await getTask(params.taskId);
 
   if (!task) {
     notFound();
@@ -32,25 +117,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
       default: return 'bg-gray-500';
     }
   }
-
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-
-    const comment: Comment = {
-      id: `C${task.comments.length + 1}`,
-      authorName: 'Alex Doe', // Mock current user
-      authorRole: 'Manager', // Mock current user role
-      content: newComment,
-      timestamp: new Date().toISOString(),
-    };
-
-    const updatedTasks = tasks.map(t => 
-      t.id === task.id ? { ...t, comments: [...t.comments, comment] } : t
-    );
-    setTasks(updatedTasks);
-    setNewComment('');
-  };
-
+  
   const getAvatarForRole = (role: string) => {
       // In a real app, you'd have user profiles with avatars
       switch(role) {
@@ -66,9 +133,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
     <div className="min-h-screen bg-muted/40">
         <header className="bg-background border-b">
             <div className="container mx-auto flex items-center p-4">
-                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
+                 <BackButton />
                 <h1 className="text-xl font-semibold ml-2">Task Details</h1>
             </div>
         </header>
@@ -102,53 +167,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                         </div>
                     </CardFooter>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Comments & Discussion</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                            {task.comments.map(comment => (
-                                <div key={comment.id} className="flex gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={getAvatarForRole(comment.authorRole)} />
-                                        <AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 bg-muted/50 p-3 rounded-lg">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <p className="font-semibold">
-                                                {comment.authorName}
-                                                <Badge variant="outline" className="ml-2 text-xs">{comment.authorRole}</Badge>
-                                            </p>
-                                            <time className="text-xs text-muted-foreground">
-                                                {format(parseISO(comment.timestamp), 'PPp')}
-                                            </time>
-                                        </div>
-                                        <p className="text-sm text-foreground">{comment.content}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <div className="w-full flex gap-3">
-                             <Avatar>
-                                <AvatarImage src={getAvatarForRole('Manager')} />
-                                <AvatarFallback>A</AvatarFallback>
-                            </Avatar>
-                            <div className="w-full space-y-2">
-                                <Textarea 
-                                    placeholder="Add a comment..." 
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                />
-                                <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                                    Post Comment
-                                </Button>
-                            </div>
-                        </div>
-                    </CardFooter>
-                </Card>
+                <CommentSection task={task} getAvatarForRole={getAvatarForRole} />
             </div>
             <div className="space-y-6">
                 <Card>

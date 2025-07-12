@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -6,22 +7,39 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { tasks, clients } from "@/lib/data";
-import { CheckCircle, GanttChartSquare, Globe, PlusCircle } from "lucide-react";
+import { CheckCircle, GanttChartSquare } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ClientTaskRequestForm } from "./_components/client-task-request-form";
 import { notFound } from "next/navigation";
+import connectDB from "@/lib/mongoose";
+import ClientModel from "@/models/Client";
+import TaskModel from "@/models/Task";
+import type { Client, Task } from "@/lib/data";
 
-export default function ClientPortalPage({ params }: { params: { clientId: string } }) {
-  const client = clients.find(c => c.id === params.clientId);
+async function getClientData(clientId: string) {
+    await connectDB();
+    const client = await ClientModel.findOne({ id: clientId }).lean();
+    if (!client) {
+        return null;
+    }
+    const tasks = await TaskModel.find({ client: client.name }).lean();
 
-  if (!client) {
+    return {
+        client: JSON.parse(JSON.stringify(client)) as Client,
+        tasks: JSON.parse(JSON.stringify(tasks)) as Task[],
+    }
+}
+
+
+export default async function ClientPortalPage({ params }: { params: { clientId: string } }) {
+  const data = await getClientData(params.clientId);
+
+  if (!data) {
       notFound();
   }
 
-  const clientName = client.name;
-  const clientTasks = tasks.filter((task) => task.client === clientName);
+  const { client, tasks: clientTasks } = data;
+
   const completedTasks = clientTasks.filter((task) => task.status === "Completed").length;
   const totalTasks = clientTasks.length;
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -31,7 +49,7 @@ export default function ClientPortalPage({ params }: { params: { clientId: strin
         <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-3xl">Project Progress: {clientName}</CardTitle>
+                <CardTitle className="text-3xl">Project Progress: {client.name}</CardTitle>
                 <CardDescription>
                   A summary of the work being done for your projects.
                 </CardDescription>
@@ -49,7 +67,7 @@ export default function ClientPortalPage({ params }: { params: { clientId: strin
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg flex items-center gap-2"><GanttChartSquare className="text-primary"/> Project Timeline</h3>
                   <div className="relative border-l-2 border-primary/20 pl-6 space-y-8">
-                    {clientTasks.map((task, index) => (
+                    {clientTasks.map((task) => (
                       <div key={task.id} className="relative flex items-start">
                          <div className="absolute -left-[33px] top-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
                            {task.status === 'Completed' && <CheckCircle className="h-3 w-3 text-white" />}

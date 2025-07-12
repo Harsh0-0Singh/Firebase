@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -29,11 +30,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { clients as initialClients, Client } from "@/lib/data";
+import { type Client } from "@/lib/data";
 import { Globe } from 'lucide-react';
 
+// TODO: Convert this to use server actions to add clients
 export default function ManagerClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [newClientName, setNewClientName] = useState('');
   const [newClientContact, setNewClientContact] = useState('');
   const [newClientUsername, setNewClientUsername] = useState('');

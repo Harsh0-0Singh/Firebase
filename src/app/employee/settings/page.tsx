@@ -1,14 +1,21 @@
+
 'use client';
 
 import { ProfileForm } from "@/components/profile-form";
-import { employees } from "@/lib/data";
+import type { Employee } from "@/lib/data";
+import { useEffect, useState } from "react";
 
 export default function EmployeeSettingsPage() {
-  // Mocking the logged-in employee. In a real app, this would come from session/auth context.
-  const employee = employees.find(e => e.id === '2'); // Jane Smith
+  const [employee, setEmployee] = useState<Employee | null>(null);
+
+  useEffect(() => {
+    // In a real app, this would come from session/auth context.
+    // Fetch employee data here. For now, it's null.
+  }, []);
+  
 
   if (!employee) {
-    return <div>Employee not found.</div>
+    return <div>Loading employee data...</div>
   }
 
   return <ProfileForm user={employee} userType="Employee" />;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -32,13 +33,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ResourceRequest, resourceRequests as initialRequests } from "@/lib/data";
+import { type ResourceRequest } from "@/lib/data";
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PlusCircle } from 'lucide-react';
 
 export default function EmployeeRequestsPage() {
-  const [requests, setRequests] = useState(initialRequests.filter(r => r.requesterId === '2')); // Mocking logged in as Jane Smith
+  const [requests, setRequests] = useState<ResourceRequest[]>([]); // Mocking logged in as Jane Smith
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState('');
   const [newReason, setNewReason] = useState('');
