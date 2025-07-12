@@ -1,5 +1,14 @@
 import { AppLayout, type NavLink } from "@/components/app-layout";
 import { Users } from 'lucide-react';
+import connectDB from "@/lib/mongoose";
+import EmployeeModel from "@/models/Employee";
+import type { Employee } from "@/lib/data";
+
+async function getManager(): Promise<Employee | null> {
+    await connectDB();
+    const manager = await EmployeeModel.findOne({ role: 'Manager' }).lean();
+    return manager ? JSON.parse(JSON.stringify(manager)) : null;
+}
 
 const navLinks: NavLink[] = [
   { href: "/manager/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
@@ -12,13 +21,15 @@ const navLinks: NavLink[] = [
   { href: "/manager/settings", label: "Settings", icon: 'Settings' },
 ];
 
-export default function ManagerLayout({ children }: { children: React.ReactNode }) {
+export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
+  const manager = await getManager();
+  
   return (
     <AppLayout 
       navLinks={navLinks} 
-      userName="Alex Doe"
+      userName={manager?.name || "Manager"}
       userRole="Manager"
-      userAvatar="https://placehold.co/100x100.png"
+      userAvatar={manager?.avatar || "https://placehold.co/100x100.png"}
     >
       {children}
     </AppLayout>

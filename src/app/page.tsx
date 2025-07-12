@@ -39,16 +39,16 @@ export default function LoginPage() {
     if (state.user && state.role) {
       toast({
         title: 'Login Successful',
-        description: `Welcome, ${state.user}! Redirecting you to your dashboard.`,
+        description: `Welcome, ${state.user.name}! Redirecting you to your dashboard.`,
       });
       if (state.role === 'Manager') {
         router.push('/manager/dashboard');
       } else if (state.role === 'Client') {
         router.push(`/clients/${state.user.id}`);
-      } else {
-        router.push('/employee/dashboard');
+      } else { // Employee
+        router.push(`/employee/${state.user.id}/dashboard`);
       }
-    } else if (state.message) {
+    } else if (state.message && !state.user) {
        toast({
         title: 'Login Failed',
         description: state.message,
@@ -99,7 +99,7 @@ export default function LoginPage() {
               />
             </div>
              <div aria-live="polite" aria-atomic="true">
-                {state.message && <p className="mt-2 text-sm text-destructive">{state.message}</p>}
+                {state.message && !state.user && <p className="mt-2 text-sm text-destructive">{state.message}</p>}
              </div>
             <LoginButton />
           </form>
