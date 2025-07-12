@@ -5,11 +5,14 @@ import { EmployeeTasksPageContent } from "./_components/employee-tasks-page-cont
 
 
 export default async function EmployeeTasksPage({ params }: { params: { employeeId: string }}) {
-    const tasks = await getTasksForEmployee(params.employeeId);
+    const tasksData = await getTasksForEmployee(params.employeeId);
 
-    if (tasks === null) {
+    if (tasksData === null) {
         notFound();
     }
+    
+    // Ensure tasks are plain objects before passing to the client component
+    const tasks = JSON.parse(JSON.stringify(tasksData));
     
     return <EmployeeTasksPageContent initialTasks={tasks} />;
 }
