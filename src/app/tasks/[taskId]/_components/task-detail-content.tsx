@@ -54,7 +54,6 @@ function FormattedTime({ timestamp }: { timestamp: string }) {
     );
 }
 
-
 function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRole: (role:string) => string }) {
     return (
          <Card>
@@ -172,7 +171,17 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, taskClient }: { initialTask: Task, allEmployees: Employee[], currentUser: (Employee | Client) | null, taskClient: Client | null }) {
+export function TaskDetailPageContent({ 
+    initialTask, 
+    allEmployees, 
+    currentUser, 
+    canComment 
+}: { 
+    initialTask: Task;
+    allEmployees: Employee[];
+    currentUser: (Employee | Client) | null;
+    canComment: boolean;
+}) {
     const [task, setTask] = useState(initialTask);
     const [newComment, setNewComment] = useState('');
     const { toast } = useToast();
@@ -210,10 +219,6 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, 
     }
 
     const isManager = currentUser && 'role' in currentUser && currentUser.role === 'Manager';
-    const isAssignedEmployee = currentUser && 'role' in currentUser && task.assignees.includes(currentUser.name);
-    const isTaskClient = currentUser && 'contactEmail' in currentUser && currentUser.id === taskClient?.id;
-
-    const canComment = isManager || isAssignedEmployee || isTaskClient;
 
     const handleAddComment = async () => {
         if (!newComment.trim() || !currentUser) return;
@@ -284,7 +289,7 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, 
                         task={task} 
                         getAvatarForRole={getAvatarForRole} 
                     />
-                    {canComment && currentUser && (
+                     {canComment && currentUser && (
                          <Card>
                             <CardHeader>
                                 <CardTitle>Add a Comment</CardTitle>

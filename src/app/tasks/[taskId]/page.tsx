@@ -10,13 +10,13 @@ import { cookies } from 'next/headers';
 
 // This is a placeholder for a real auth system.
 // In a real app, you'd get this from a session cookie.
-function getCurrentUserId(): string | null {
+function getLoginInfo(): { user: Employee | Client, role: 'Manager' | 'Employee' | 'Client' } | null {
     const cookieStore = cookies();
     const loginCookie = cookieStore.get('login_info');
     if (loginCookie) {
         try {
-            const { user } = JSON.parse(loginCookie.value);
-            return user?.id || null;
+            const parsed = JSON.parse(loginCookie.value);
+            return parsed.user && parsed.role ? parsed : null;
         } catch (e) {
             return null;
         }
@@ -43,15 +43,27 @@ export default async function TaskDetailPage({ params }: { params: { taskId: str
     const allEmployees = JSON.parse(JSON.stringify(employeesData)) as Employee[];
     const allClients = JSON.parse(JSON.stringify(clientsData)) as Client[];
 
-    const currentUserId = getCurrentUserId();
-    
-    let currentUser: Employee | Client | null = null;
-    if (currentUserId) {
-        currentUser = allEmployees.find(e => e.id === currentUserId) || allClients.find(c => c.id === currentUserId) || null;
-    }
+    const loginInfo = getLoginInfo();
+    const currentUser = loginInfo ? loginInfo.user : null;
+    const currentUserRole = loginInfo ? loginInfo.role : null;
     
     const taskClient = allClients.find(c => c.name === task.client) || null;
 
+    // Determine if the current user can comment
+    let canComment = false;
+    if (currentUser) {
+        const isManager = currentUserRole === 'Manager';
+        const isAssignedEmployee = currentUserRole === 'Employee' && task.assignees.includes(currentUser.name);
+        const isTaskClient = currentUserRole === 'Client' && taskClient?.id === currentUser.id;
+        canComment = isManager || isAssignedEmployee || isTaskClient;
+    }
 
-    return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} currentUser={currentUser} taskClient={taskClient} />;
+    return (
+        <TaskDetailPageContent 
+            initialTask={task} 
+            allEmployees={allEmployees} 
+            currentUser={currentUser} 
+            canComment={canComment} 
+        />
+    );
 }
