@@ -80,7 +80,7 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
     };
     
     const getAuthorAvatar = (author: Employee | Client) => {
-        if ('avatar' in author) {
+        if ('avatar' in author && author.avatar) {
             return author.avatar;
         }
         return 'https://placehold.co/40x40.png'; // Default for client
@@ -239,8 +239,11 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }
         if (role === 'Client') {
             return 'https://placehold.co/40x40.png';
         }
-        const employeeWithRole = allEmployees.find(e => e.role === role);
-        return employeeWithRole ? employeeWithRole.avatar : 'https://placehold.co/40x40.png';
+        const employeeWithRole = allEmployees.find(e => e.role === role || e.name === role); // A bit fuzzy but covers cases
+        if (employeeWithRole && employeeWithRole.avatar) {
+            return employeeWithRole.avatar;
+        }
+        return 'https://placehold.co/40x40.png';
     }
     
     const handleTaskTransferred = (newAssignees: string[]) => {
