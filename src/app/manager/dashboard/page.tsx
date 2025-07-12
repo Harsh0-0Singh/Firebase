@@ -1,8 +1,5 @@
 
 
-"use client"
-
-import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -24,11 +21,12 @@ import {
   YAxis,
 } from "recharts"
 import type { Task } from "@/lib/data"
-import { format, isToday, parseISO, isSameDay, compareDesc } from 'date-fns';
+import { format, isSameDay, parseISO, compareDesc } from 'date-fns';
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { TeamChat } from "@/components/team-chat"
 import TaskModel from '@/models/Task';
+import connectDB from "@/lib/mongoose"
 
 const chartData = [
   { month: "January", completed: 186 },
@@ -48,12 +46,9 @@ const chartConfig = {
 
 async function getTasks() {
     try {
-        const response = await fetch('/api/tasks');
-        if (!response.ok) {
-            throw new Error('Failed to fetch tasks');
-        }
-        const tasks = await response.json();
-        return tasks;
+        await connectDB();
+        const tasks = await TaskModel.find({}).lean();
+        return JSON.parse(JSON.stringify(tasks));
     } catch (error) {
         console.error("Failed to fetch tasks", error);
         return [];
@@ -61,16 +56,8 @@ async function getTasks() {
 }
 
 
-export default function ManagerDashboard() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  useEffect(() => {
-      async function loadData() {
-          const tasksData = await getTasks();
-          setTasks(tasksData);
-      }
-      loadData();
-  }, []);
+export default async function ManagerDashboard() {
+  const tasks: Task[] = await getTasks();
     
   const completedTasks = tasks.filter(t => t.status === "Completed").length;
   const inProgressTasks = tasks.filter(t => t.status === "In Progress").length;
