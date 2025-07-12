@@ -7,7 +7,7 @@ import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
 import MessageModel from '@/models/Message';
 import EmployeeModel from '@/models/Employee';
-import type { Task, TaskStatus, NotificationMessage, Employee } from '@/lib/data';
+import type { Task, TaskStatus, NotificationMessage, Employee, Comment } from '@/lib/data';
 
 async function getManager(): Promise<Employee | null> {
     await connectDB();
@@ -139,5 +139,33 @@ export async function transferTask(taskId: string, newAssignees: string[]) {
     } catch (error) {
         console.error("Failed to transfer task", error);
         return { success: false, error: 'Failed to transfer task' };
+    }
+}
+
+
+export async function addCommentToTask(taskId: string, author: Employee, content: string) {
+    try {
+        await connectDB();
+        const task = await TaskModel.findOne({ id: taskId });
+        if (!task) {
+            return { success: false, error: 'Task not found' };
+        }
+
+        const newComment: Comment = {
+            id: `C${Date.now()}`, // Server-generated ID
+            authorName: author.name,
+            authorRole: author.role as any,
+            content: content,
+            timestamp: new Date().toISOString(),
+        };
+
+        task.comments.push(newComment);
+        await task.save();
+
+        revalidatePath(`/tasks/${taskId}`);
+        return { success: true, comment: JSON.parse(JSON.stringify(newComment)) };
+    } catch (error) {
+        console.error("Failed to add comment", error);
+        return { success: false, error: 'Failed to add comment' };
     }
 }

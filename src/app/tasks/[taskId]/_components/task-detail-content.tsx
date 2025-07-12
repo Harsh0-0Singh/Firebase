@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { transferTask } from '@/app/actions/tasks';
+import { transferTask, addCommentToTask } from '@/app/actions/tasks';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -38,21 +38,41 @@ function BackButton() {
 
 function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee }) {
     const [newComment, setNewComment] = useState('');
-    const [comments, setComments] = useState(task.comments || []);
+    const [comments, setComments] = useState<Comment[]>(task.comments || []);
+    const { toast } = useToast();
 
-    const handleAddComment = () => {
-        if (!newComment.trim()) return;
-
-        const comment: Comment = {
-            id: `C${(comments || []).length + 1}`,
+    const handleAddComment = async () => {
+        if (!newComment.trim() || !currentUser) return;
+        
+        const tempId = `temp-${Date.now()}`;
+        const optimisticComment: Comment = {
+            id: tempId,
             authorName: currentUser.name,
             authorRole: currentUser.role as any,
             content: newComment,
             timestamp: new Date().toISOString(),
         };
-        // TODO: This should call a server action to save the comment
-        setComments([...(comments || []), comment]);
+
+        // Optimistically update UI
+        setComments(prev => [...prev, optimisticComment]);
+        const commentContent = newComment;
         setNewComment('');
+
+        const result = await addCommentToTask(task.id, currentUser, commentContent);
+
+        if (result.success && result.comment) {
+            // Replace temporary comment with the one from the server
+            setComments(prev => prev.map(c => c.id === tempId ? result.comment! : c));
+        } else {
+            // Rollback on failure
+            setComments(prev => prev.filter(c => c.id !== tempId));
+            setNewComment(commentContent); // Restore textarea content
+            toast({
+                title: "Error",
+                description: result.error || "Failed to post comment.",
+                variant: 'destructive',
+            });
+        }
     };
 
     return (
@@ -62,7 +82,7 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
-                    {(comments || []).map(comment => (
+                    {comments.map(comment => (
                         <div key={comment.id} className="flex gap-3">
                             <Avatar>
                                 <AvatarImage src={getAvatarForRole(comment.authorRole)} />
@@ -87,8 +107,8 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
             <CardFooter>
                 <div className="w-full flex gap-3">
                      <Avatar>
-                        <AvatarImage src={currentUser.avatar} />
-                        <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={currentUser?.avatar} />
+                        <AvatarFallback>{currentUser?.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="w-full space-y-2">
                         <Textarea 
@@ -229,12 +249,15 @@ export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTa
     }
     
     const getAvatarForRole = (role: string) => {
+        if (role === 'Manager') {
+            return manager.avatar;
+        }
         const employee = allEmployees.find(e => e.role === role);
         return employee ? employee.avatar : 'https://placehold.co/40x40.png';
     }
     
     const handleTaskTransferred = (newAssignees: string[]) => {
-        setTask(prevTask => prevTask ? ({ ...prevTask, assignees: newAssignees }) : null);
+        setTask(prevTask => ({ ...prevTask, assignees: newAssignees }));
     }
 
     return (
@@ -295,7 +318,7 @@ export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTa
                             </div>
                         </CardContent>
                          <CardFooter>
-                             <TransferTaskDialog task={task} employees={allEmployees} onTaskTransferred={handleTaskTransferred} />
+                             <TransferTaskDialog task={task} employees={allEmployees.filter(e => e.role !== 'Manager')} onTaskTransferred={handleTaskTransferred} />
                         </CardFooter>
                     </Card>
                 </div>
