@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -32,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Task, TaskStatus, Employee, Client, NotificationMessage } from "@/lib/data";
+import { Task, TaskStatus, Employee, Client } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -40,21 +41,9 @@ import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronsUpDown } from 'lucide-react';
-import TaskModel from '@/models/Task';
+import { getTasksForManager, updateTaskStatus, submitTaskRating, createTask } from '@/app/actions/tasks';
 import EmployeeModel from '@/models/Employee';
 import ClientModel from '@/models/Client';
-import MessageModel from '@/models/Message';
-
-
-async function getTasks() {
-    try {
-        const tasks = await TaskModel.find({}).lean();
-        return JSON.parse(JSON.stringify(tasks));
-    } catch (error) {
-        console.error("Failed to fetch tasks", error);
-        return [];
-    }
-}
 
 async function getEmployees() {
     try {
@@ -93,7 +82,7 @@ export default function ManagerTasksPage() {
   useEffect(() => {
     async function loadData() {
         const [tasksData, employeesData, clientsData] = await Promise.all([
-            getTasks(),
+            getTasksForManager(),
             getEmployees(),
             getClients()
         ]);
@@ -105,29 +94,32 @@ export default function ManagerTasksPage() {
   }, []);
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
-    try {
-        await TaskModel.findOneAndUpdate({ id: taskId }, { status: newStatus });
-        setTasks(tasks.map(task => 
-          task.id === taskId ? { ...task, status: newStatus } : task
-        ));
-    } catch (error) {
-        console.error("Failed to update task status", error);
+    const originalTasks = [...tasks];
+    setTasks(tasks.map(task => 
+      task.id === taskId ? { ...task, status: newStatus } : task
+    ));
+    const result = await updateTaskStatus(taskId, newStatus);
+    if (!result.success) {
+        setTasks(originalTasks);
         toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
     }
   };
   
   const handleRatingSubmit = async (task: Task) => {
-    try {
-      await TaskModel.findOneAndUpdate({ id: task.id }, { rating: rating });
-      setTasks(tasks.map(t => t.id === task.id ? {...t, rating: rating} : t));
-      toast({
-        title: "Rating Submitted!",
-        description: `You gave the team ${rating} stars for completing "${task.title}".`,
-      });
-      setRating(0);
-    } catch (error) {
-      console.error("Failed to submit rating", error);
-      toast({ title: "Error", description: "Failed to submit rating", variant: "destructive" });
+    const originalTasks = [...tasks];
+    setTasks(tasks.map(t => t.id === task.id ? {...t, rating: rating} : t));
+
+    const result = await submitTaskRating(task.id, rating, task.title);
+
+    if (result.success) {
+        toast({
+            title: "Rating Submitted!",
+            description: `You gave the team ${rating} stars for completing "${task.title}".`,
+        });
+        setRating(0);
+    } else {
+        setTasks(originalTasks);
+        toast({ title: "Error", description: "Failed to submit rating", variant: "destructive" });
     }
   };
 
@@ -140,45 +132,23 @@ export default function ManagerTasksPage() {
       });
       return;
     }
-
-    const tasksCount = await TaskModel.countDocuments();
-    const newTaskId = `T${tasksCount + 1}`;
     
-    const newTaskData: Task = {
-      id: newTaskId,
+    const newTaskData = {
       title: newTaskTitle,
       description: newTaskDescription,
       assignees: newTaskAssignees,
       client: newTaskClient,
       dueDate: format(new Date(newTaskDueDate), 'yyyy-MM-dd'),
-      status: 'Pending',
+      status: 'Pending' as TaskStatus,
       rating: 0,
       createdBy: 'Alex Doe', // Logged in manager
       createdAt: format(new Date(), 'yyyy-MM-dd'),
-      comments: [],
     };
     
-    const messagesCount = await MessageModel.countDocuments();
-    const newNotificationData: NotificationMessage = {
-      id: `M${messagesCount + 1}`,
-      type: 'notification',
-      content: `created a new task "${newTaskData.title}" and assigned it to ${newTaskData.assignees.join(', ')}.`,
-      authorId: '1', // Alex Doe
-      timestamp: new Date().toISOString(),
-      taskId: newTaskData.id,
-    };
+    const result = await createTask(newTaskData);
 
-    try {
-        const newTask = new TaskModel(newTaskData);
-        const newNotification = new MessageModel(newNotificationData);
-        
-        await Promise.all([
-            newTask.save(),
-            newNotification.save()
-        ]);
-        
-        setTasks([...tasks, newTaskData]);
-
+    if (result.success && result.task) {
+        setTasks([...tasks, result.task]);
         toast({
           title: "Task Created!",
           description: `Task "${newTaskTitle}" has been assigned.`
@@ -191,9 +161,8 @@ export default function ManagerTasksPage() {
         setNewTaskClient('');
         setNewTaskDueDate('');
         setIsCreateDialogOpen(false);
-    } catch (error) {
-        console.error("Failed to create task", error);
-        toast({ title: "Error", description: "Failed to create task", variant: "destructive" });
+    } else {
+        toast({ title: "Error", description: result.error || "Failed to create task", variant: "destructive" });
     }
   }
 
