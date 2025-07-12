@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Calendar, User, UserCheck, Shuffle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import type { Task, Comment, Employee } from '@/lib/data';
+import type { Task, Comment, Employee, Client } from '@/lib/data';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -55,10 +55,9 @@ function FormattedTime({ timestamp }: { timestamp: string }) {
 }
 
 
-function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee | null, onCommentAdded: (newComment: Comment) => void }) {
+function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: (Employee | Client) | null, onCommentAdded: (newComment: Comment) => void }) {
     const [newComment, setNewComment] = useState('');
     const { toast } = useToast();
-    const comments = task.comments || [];
 
     const handleAddComment = async () => {
         if (!newComment.trim() || !currentUser) return;
@@ -80,6 +79,13 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
         }
     };
     
+    const getAuthorAvatar = (author: Employee | Client) => {
+        if ('avatar' in author) {
+            return author.avatar;
+        }
+        return 'https://placehold.co/40x40.png'; // Default for client
+    };
+    
     return (
          <Card>
             <CardHeader>
@@ -87,7 +93,7 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
-                    {comments.map(comment => (
+                    {task.comments.map(comment => (
                         <div key={comment.id} className="flex gap-3">
                             <Avatar>
                                 <AvatarImage src={getAvatarForRole(comment.authorRole)} />
@@ -105,14 +111,14 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
                             </div>
                         </div>
                     ))}
-                    {comments.length === 0 && <p className="text-muted-foreground text-center py-4">No comments yet.</p>}
+                    {task.comments.length === 0 && <p className="text-muted-foreground text-center py-4">No comments yet.</p>}
                 </div>
             </CardContent>
             {currentUser && (
                 <CardFooter>
                     <div className="w-full flex gap-3">
                         <Avatar>
-                            <AvatarImage src={currentUser?.avatar} />
+                            <AvatarImage src={getAuthorAvatar(currentUser)} />
                             <AvatarFallback>{currentUser?.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="w-full space-y-2">
@@ -216,7 +222,7 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }: { initialTask: Task, allEmployees: Employee[], currentUser: Employee | null }) {
+export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }: { initialTask: Task, allEmployees: Employee[], currentUser: (Employee | Client) | null }) {
     const [task, setTask] = useState(initialTask);
     
     const getStatusColor = (status: string) => {
@@ -230,8 +236,9 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }
     }
     
     const getAvatarForRole = (role: string) => {
-        // Find an employee with the given role to get a representative avatar.
-        // In a real app, you might have specific role avatars.
+        if (role === 'Client') {
+            return 'https://placehold.co/40x40.png';
+        }
         const employeeWithRole = allEmployees.find(e => e.role === role);
         return employeeWithRole ? employeeWithRole.avatar : 'https://placehold.co/40x40.png';
     }
@@ -247,7 +254,7 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }
         }));
     }
 
-    const isManager = currentUser?.role === 'Manager';
+    const isManager = currentUser && 'role' in currentUser && currentUser.role === 'Manager';
 
     return (
         <div className="min-h-screen bg-muted/40">

@@ -7,7 +7,8 @@ import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
 import MessageModel from '@/models/Message';
 import EmployeeModel from '@/models/Employee';
-import type { Task, TaskStatus, NotificationMessage, Employee, Comment } from '@/lib/data';
+import ClientModel from '@/models/Client';
+import type { Task, TaskStatus, NotificationMessage, Employee, Comment, Client } from '@/lib/data';
 
 async function getManager(): Promise<Employee | null> {
     await connectDB();
@@ -147,7 +148,18 @@ export async function addCommentToTask(taskId: string, authorId: string, content
     try {
         await connectDB();
         
-        const author = await EmployeeModel.findOne({ id: authorId }).lean();
+        let author: (Employee | Client) | null = await EmployeeModel.findOne({ id: authorId }).lean();
+        let authorRole: 'Employee' | 'Manager' | 'Client' = 'Employee';
+
+        if (author) {
+            authorRole = author.role === 'Manager' ? 'Manager' : 'Employee';
+        } else {
+            author = await ClientModel.findOne({ id: authorId }).lean();
+            if (author) {
+                authorRole = 'Client';
+            }
+        }
+        
         if (!author) {
             return { success: false, error: 'Could not identify author.' };
         }
@@ -160,7 +172,7 @@ export async function addCommentToTask(taskId: string, authorId: string, content
         const newComment: Comment = {
             id: `C${Date.now()}`, // Server-generated ID
             authorName: author.name,
-            authorRole: author.role as any,
+            authorRole: authorRole,
             content: content,
             timestamp: new Date().toISOString(),
         };

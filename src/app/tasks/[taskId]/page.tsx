@@ -2,9 +2,10 @@
 import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
 import EmployeeModel from '@/models/Employee';
+import ClientModel from '@/models/Client';
 import { notFound } from 'next/navigation';
 import { TaskDetailPageContent } from './_components/task-detail-content';
-import type { Task, Employee } from '@/lib/data';
+import type { Task, Employee, Client } from '@/lib/data';
 import { cookies } from 'next/headers';
 
 // This is a placeholder for a real auth system.
@@ -31,13 +32,23 @@ export default async function TaskDetailPage({ params }: { params: { taskId: str
         notFound();
     }
     
-    const employeesData = await EmployeeModel.find({}).lean();
+    const [employeesData, clientsData] = await Promise.all([
+        EmployeeModel.find({}).lean(),
+        ClientModel.find({}).lean()
+    ]);
+
 
     // Ensure data is serialized to plain objects
     const task = JSON.parse(JSON.stringify(taskData)) as Task;
     const allEmployees = JSON.parse(JSON.stringify(employeesData)) as Employee[];
+    const allClients = JSON.parse(JSON.stringify(clientsData)) as Client[];
+
     const currentUserId = getCurrentUserId();
-    const currentUser = allEmployees.find(e => e.id === currentUserId) || null;
+    
+    let currentUser: Employee | Client | null = null;
+    if (currentUserId) {
+        currentUser = allEmployees.find(e => e.id === currentUserId) || allClients.find(c => c.id === currentUserId) || null;
+    }
 
 
     return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} currentUser={currentUser} />;
