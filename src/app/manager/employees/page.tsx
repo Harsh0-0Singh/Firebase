@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useActionState } from 'react';
 import Link from 'next/link';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -91,7 +91,7 @@ export default function ManagerEmployeesPage() {
   const rankedEmployees = [...employees].sort((a, b) => b.points - a.points);
   
   const initialState = { message: null, errors: {} };
-  const [state, dispatch] = useFormState(addEmployee, initialState);
+  const [state, dispatch] = useActionState(addEmployee, initialState);
 
   useEffect(() => {
     if (state.message?.startsWith('Added employee')) {
