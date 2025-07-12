@@ -55,7 +55,7 @@ function FormattedTime({ timestamp }: { timestamp: string }) {
 }
 
 
-function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: (Employee | Client) | null, onCommentAdded: (newComment: Comment) => void }) {
+function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded, canComment }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: (Employee | Client) | null, onCommentAdded: (newComment: Comment) => void, canComment: boolean }) {
     const [newComment, setNewComment] = useState('');
     const { toast } = useToast();
 
@@ -114,7 +114,7 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
                     {task.comments.length === 0 && <p className="text-muted-foreground text-center py-4">No comments yet.</p>}
                 </div>
             </CardContent>
-            {currentUser && (
+            {canComment && currentUser && (
                 <CardFooter>
                     <div className="w-full flex gap-3">
                         <Avatar>
@@ -222,7 +222,7 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }: { initialTask: Task, allEmployees: Employee[], currentUser: (Employee | Client) | null }) {
+export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, taskClient }: { initialTask: Task, allEmployees: Employee[], currentUser: (Employee | Client) | null, taskClient: Client | null }) {
     const [task, setTask] = useState(initialTask);
     
     const getStatusColor = (status: string) => {
@@ -258,6 +258,10 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }
     }
 
     const isManager = currentUser && 'role' in currentUser && currentUser.role === 'Manager';
+    const isAssignedEmployee = currentUser && 'role' in currentUser && task.assignees.includes(currentUser.name);
+    const isTaskClient = currentUser && 'contactEmail' in currentUser && currentUser.id === taskClient?.id;
+
+    const canComment = isManager || isAssignedEmployee || isTaskClient;
 
     return (
         <div className="min-h-screen bg-muted/40">
@@ -302,6 +306,7 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }
                         getAvatarForRole={getAvatarForRole} 
                         currentUser={currentUser} 
                         onCommentAdded={handleCommentAdded}
+                        canComment={canComment}
                     />
                 </div>
                 <div className="space-y-6">

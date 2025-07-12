@@ -49,7 +49,9 @@ export default async function TaskDetailPage({ params }: { params: { taskId: str
     if (currentUserId) {
         currentUser = allEmployees.find(e => e.id === currentUserId) || allClients.find(c => c.id === currentUserId) || null;
     }
+    
+    const taskClient = allClients.find(c => c.name === task.client) || null;
 
 
-    return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} currentUser={currentUser} />;
+    return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} currentUser={currentUser} taskClient={taskClient} />;
 }
