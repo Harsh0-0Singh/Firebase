@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
 import MessageModel from '@/models/Message';
+import EmployeeModel from '@/models/Employee';
 import type { Task, TaskStatus, NotificationMessage } from '@/lib/data';
 
 export async function getTasksForManager() {
@@ -18,6 +19,22 @@ export async function getTasksForManager() {
         return [];
     }
 }
+
+export async function getTasksForEmployee(employeeId: string) {
+    try {
+        await connectDB();
+        const employee = await EmployeeModel.findOne({ id: employeeId }).lean();
+        if (!employee) {
+            return null;
+        }
+        const tasks = await TaskModel.find({ assignees: employee.name }).lean();
+        return JSON.parse(JSON.stringify(tasks));
+    } catch (error) {
+        console.error("Failed to fetch tasks for employee", error);
+        return null;
+    }
+}
+
 
 export async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
     try {
