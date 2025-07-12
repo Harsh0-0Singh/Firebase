@@ -18,6 +18,17 @@ import { login } from '@/app/actions/auth';
 import { useFormStatus } from 'react-dom';
 import { useEffect } from 'react';
 
+function setCookie(name: string, value: string, days: number) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+
+
 function LoginButton() {
     const { pending } = useFormStatus();
     return (
@@ -41,6 +52,10 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: `Welcome, ${state.user.name}! Redirecting you to your dashboard.`,
       });
+      // This is a simplified way to manage session state for this demo app.
+      // In a production app, you would use a more secure session management library.
+      setCookie('login_info', JSON.stringify(state), 1);
+
       if (state.role === 'Manager') {
         router.push('/manager/dashboard');
       } else if (state.role === 'Client') {

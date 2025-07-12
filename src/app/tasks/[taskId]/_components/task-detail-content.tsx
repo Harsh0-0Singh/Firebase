@@ -36,7 +36,7 @@ function BackButton() {
     )
 }
 
-function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee }) {
+function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee | null }) {
     const [newComment, setNewComment] = useState('');
     const [comments, setComments] = useState<Comment[]>(task.comments || []);
     const { toast } = useToast();
@@ -58,7 +58,7 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
         const commentContent = newComment;
         setNewComment('');
 
-        const result = await addCommentToTask(task.id, commentContent);
+        const result = await addCommentToTask(task.id, currentUser.id, commentContent);
 
         if (result.success && result.comment) {
             // Replace temporary comment with the one from the server
@@ -74,6 +74,15 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
             });
         }
     };
+
+    if (!currentUser) {
+        return (
+            <Card>
+                <CardHeader><CardTitle>Comments & Discussion</CardTitle></CardHeader>
+                <CardContent><p>Loading comments...</p></CardContent>
+            </Card>
+        );
+    }
 
     return (
          <Card>
@@ -102,6 +111,7 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
                             </div>
                         </div>
                     ))}
+                    {comments.length === 0 && <p className="text-muted-foreground text-center py-4">No comments yet.</p>}
                 </div>
             </CardContent>
             <CardFooter>
@@ -210,19 +220,19 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Task, allEmployees: Employee[] }) {
+export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId }: { initialTask: Task, allEmployees: Employee[], currentUserId: string | null }) {
     const [task, setTask] = useState(initialTask);
-    const [manager, setManager] = useState<Employee | null>(null);
+    const [currentUser, setCurrentUser] = useState<Employee | null>(null);
 
     useEffect(() => {
         setTask(initialTask);
-        const findManager = allEmployees.find(e => e.role === 'Manager');
-        if(findManager) {
-            setManager(findManager);
+        if(currentUserId) {
+            const user = allEmployees.find(e => e.id === currentUserId);
+            setCurrentUser(user || null);
         }
-    }, [initialTask, allEmployees]);
+    }, [initialTask, allEmployees, currentUserId]);
 
-    if (!task || !manager) {
+    if (!task) {
         return (
              <div className="min-h-screen bg-muted/40">
                 <header className="bg-background border-b">
@@ -249,9 +259,6 @@ export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTa
     }
     
     const getAvatarForRole = (role: string) => {
-        if (role === 'Manager') {
-            return manager.avatar;
-        }
         const employee = allEmployees.find(e => e.role === role);
         return employee ? employee.avatar : 'https://placehold.co/40x40.png';
     }
@@ -259,6 +266,8 @@ export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTa
     const handleTaskTransferred = (newAssignees: string[]) => {
         setTask(prevTask => ({ ...prevTask, assignees: newAssignees }));
     }
+
+    const isManager = currentUser?.role === 'Manager';
 
     return (
         <div className="min-h-screen bg-muted/40">
@@ -298,7 +307,7 @@ export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTa
                             </div>
                         </CardFooter>
                     </Card>
-                    <CommentSection task={task} getAvatarForRole={getAvatarForRole} currentUser={manager} />
+                    <CommentSection task={task} getAvatarForRole={getAvatarForRole} currentUser={currentUser} />
                 </div>
                 <div className="space-y-6">
                     <Card>
@@ -318,7 +327,9 @@ export function TaskDetailPageContent({ initialTask, allEmployees }: { initialTa
                             </div>
                         </CardContent>
                          <CardFooter>
-                             <TransferTaskDialog task={task} employees={allEmployees.filter(e => e.role !== 'Manager')} onTaskTransferred={handleTaskTransferred} />
+                            {isManager && (
+                                <TransferTaskDialog task={task} employees={allEmployees.filter(e => e.role !== 'Manager')} onTaskTransferred={handleTaskTransferred} />
+                            )}
                         </CardFooter>
                     </Card>
                 </div>

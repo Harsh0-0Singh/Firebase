@@ -143,11 +143,11 @@ export async function transferTask(taskId: string, newAssignees: string[]) {
 }
 
 
-export async function addCommentToTask(taskId: string, content: string) {
+export async function addCommentToTask(taskId: string, authorId: string, content: string) {
     try {
         await connectDB();
         
-        const author = await getManager();
+        const author = await EmployeeModel.findOne({ id: authorId }).lean();
         if (!author) {
             return { success: false, error: 'Could not identify author.' };
         }
