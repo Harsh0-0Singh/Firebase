@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -25,6 +24,10 @@ import { useToast } from '@/hooks/use-toast';
 import { transferTask } from '@/app/actions/tasks';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import TaskModel from '@/models/Task';
+import EmployeeModel from '@/models/Employee';
+import connectDB from '@/lib/mongoose';
+import { notFound } from 'next/navigation';
 
 
 function BackButton() {
@@ -190,8 +193,28 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-export default function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Task, allEmployees: Employee[] }) {
+function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask?: Task, allEmployees: Employee[] }) {
     const [task, setTask] = useState(initialTask);
+
+    useEffect(() => {
+        setTask(initialTask);
+    }, [initialTask]);
+
+    if (!task) {
+        return (
+             <div className="min-h-screen bg-muted/40">
+                <header className="bg-background border-b">
+                    <div className="container mx-auto flex items-center p-4">
+                        <BackButton />
+                        <h1 className="text-xl font-semibold ml-2">Loading Task...</h1>
+                    </div>
+                </header>
+                <main className="container mx-auto p-4 md:p-8">
+                    <p>Loading...</p>
+                </main>
+            </div>
+        )
+    }
     
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -213,7 +236,7 @@ export default function TaskDetailPageContent({ initialTask, allEmployees }: { i
     }
     
     const handleTaskTransferred = (newAssignees: string[]) => {
-        setTask(prevTask => ({ ...prevTask, assignees: newAssignees }));
+        setTask(prevTask => prevTask ? ({ ...prevTask, assignees: newAssignees }) : undefined);
     }
 
     return (
@@ -281,4 +304,21 @@ export default function TaskDetailPageContent({ initialTask, allEmployees }: { i
             </main>
         </div>
     );
+}
+
+// This is now a Server Component responsible for fetching data
+export default async function TaskDetailPage({ params }: { params: { taskId: string } }) {
+    await connectDB();
+    const taskData = await TaskModel.findOne({ id: params.taskId }).lean();
+    
+    if (!taskData) {
+        notFound();
+    }
+    
+    const employeesData = await EmployeeModel.find({}).lean();
+
+    const task = JSON.parse(JSON.stringify(taskData));
+    const allEmployees = JSON.parse(JSON.stringify(employeesData));
+
+    return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} />;
 }
