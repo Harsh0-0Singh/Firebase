@@ -10,8 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Calendar, User, UserCheck, Shuffle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import connectDB from '@/lib/mongoose';
-import TaskModel from '@/models/Task';
 import type { Task, Comment, Employee } from '@/lib/data';
 import { useState, useEffect } from 'react';
 import {
@@ -25,20 +23,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { transferTask } from '@/app/actions/tasks';
-import { getEmployees } from '@/app/actions/employees';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { notFound } from 'next/navigation';
 
-
-async function getTask(taskId: string): Promise<Task | null> {
-    await connectDB();
-    const task = await TaskModel.findOne({ id: taskId }).lean();
-    if (task && !task.comments) {
-      task.comments = [];
-    }
-    return task ? JSON.parse(JSON.stringify(task)) : null;
-}
 
 function BackButton() {
     const router = useRouter();
@@ -203,7 +190,7 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Task, allEmployees: Employee[] }) {
+export default function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Task, allEmployees: Employee[] }) {
     const [task, setTask] = useState(initialTask);
     
     const getStatusColor = (status: string) => {
@@ -294,19 +281,4 @@ function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Tas
             </main>
         </div>
     );
-}
-
-// This is now a Server Component
-export default async function TaskDetailPage({ params }: { params: { taskId: string } }) {
-    const taskData = await getTask(params.taskId);
-    
-    if (!taskData) {
-        notFound();
-    }
-    
-    // Fetch and serialize employees
-    const employeesData = await getEmployees();
-    const plainEmployees = JSON.parse(JSON.stringify(employeesData));
-
-    return <TaskDetailPageContent initialTask={taskData} allEmployees={plainEmployees} />;
 }
