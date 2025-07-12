@@ -1,19 +1,41 @@
 
 'use client';
 
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Calendar, User, UserCheck } from 'lucide-react';
+import { ArrowLeft, Calendar, User, UserCheck, Shuffle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
-import type { Task, Comment } from '@/lib/data';
+import type { Task, Comment, Employee } from '@/lib/data';
 import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from '@/hooks/use-toast';
+import { transferTask } from '@/app/actions/tasks';
+import { getEmployees } from '@/app/actions/employees';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+
 
 async function getTask(taskId: string): Promise<Task | null> {
     await connectDB();
@@ -21,7 +43,6 @@ async function getTask(taskId: string): Promise<Task | null> {
     return task ? JSON.parse(JSON.stringify(task)) : null;
 }
 
-// A Client Component to handle returning to the previous page.
 function BackButton() {
     const router = useRouter();
     return (
@@ -31,7 +52,6 @@ function BackButton() {
     )
 }
 
-// A Client Component for the comment section
 function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRole: (role:string) => string }) {
     const [newComment, setNewComment] = useState('');
     const [comments, setComments] = useState(task.comments);
@@ -102,7 +122,93 @@ function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRo
     )
 }
 
-function TaskDetailPageContent({ task }: { task: Task }) {
+function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task; employees: Employee[]; onTaskTransferred: (newAssignees: string[]) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedAssignees, setSelectedAssignees] = useState<string[]>(task.assignees);
+    const { toast } = useToast();
+
+    const handleTransfer = async () => {
+        if (selectedAssignees.length === 0) {
+            toast({
+                title: 'Error',
+                description: 'Please select at least one assignee.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        
+        const result = await transferTask(task.id, selectedAssignees);
+        if (result.success) {
+            toast({
+                title: 'Task Transferred',
+                description: `Task "${task.title}" has been successfully transferred.`,
+            });
+            onTaskTransferred(selectedAssignees);
+            setIsOpen(false);
+        } else {
+            toast({
+                title: 'Error',
+                description: result.error,
+                variant: 'destructive',
+            });
+        }
+    };
+    
+    const handleAssigneeChange = (checked: boolean, employeeName: string) => {
+      setSelectedAssignees(prev => {
+          const newAssignees = checked 
+            ? [...prev, employeeName]
+            : prev.filter(name => name !== employeeName);
+          return newAssignees;
+      });
+  }
+
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <Shuffle className="mr-2 h-4 w-4" />
+                    Transfer Task
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Transfer Task: {task.title}</DialogTitle>
+                    <DialogDescription>
+                        Select one or more employees to re-assign this task to.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label>Assign to</Label>
+                    <div className="mt-2 space-y-2 max-h-60 overflow-y-auto p-1">
+                        {employees.map(employee => (
+                            <div key={employee.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`assignee-${employee.id}`}
+                                    checked={selectedAssignees.includes(employee.name)}
+                                    onCheckedChange={(checked) => handleAssigneeChange(!!checked, employee.name)}
+                                />
+                                <Label htmlFor={`assignee-${employee.id}`} className="font-normal w-full cursor-pointer">
+                                    {employee.name} <span className="text-muted-foreground">({employee.role})</span>
+                                </Label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleTransfer}>Confirm Transfer</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Task, allEmployees: Employee[] }) {
+    const [task, setTask] = useState(initialTask);
+    
     const getStatusColor = (status: string) => {
         switch (status) {
         case 'Completed': return 'bg-green-500 hover:bg-green-600';
@@ -121,6 +227,10 @@ function TaskDetailPageContent({ task }: { task: Task }) {
             case 'Client': return 'https://placehold.co/40x40.png';
             default: return 'https://placehold.co/40x40.png';
         }
+    }
+    
+    const handleTaskTransferred = (newAssignees: string[]) => {
+        setTask(prevTask => ({ ...prevTask, assignees: newAssignees }));
     }
 
     return (
@@ -180,6 +290,9 @@ function TaskDetailPageContent({ task }: { task: Task }) {
                                 </div>
                             </div>
                         </CardContent>
+                         <CardFooter>
+                             <TransferTaskDialog task={task} employees={allEmployees} onTaskTransferred={handleTaskTransferred} />
+                        </CardFooter>
                     </Card>
                 </div>
             </main>
@@ -189,15 +302,24 @@ function TaskDetailPageContent({ task }: { task: Task }) {
 
 export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
     const [task, setTask] = useState<Task | null>(null);
+    const [employees, setEmployees] = useState<Employee[]>([]);
 
     useEffect(() => {
-        getTask(params.taskId).then(setTask);
+        async function loadData() {
+            const [taskData, employeesData] = await Promise.all([
+                getTask(params.taskId),
+                getEmployees()
+            ]);
+            setTask(taskData);
+            setEmployees(employeesData);
+        }
+        loadData();
     }, [params.taskId]);
 
     if (!task) {
         // You can show a loading spinner here
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
 
-    return <TaskDetailPageContent task={task} />;
+    return <TaskDetailPageContent initialTask={task} allEmployees={employees} />;
 }

@@ -94,3 +94,16 @@ export async function createTask(newTaskData: Omit<Task, '_id' | 'id' | 'comment
         return { success: false, error: 'Failed to create task' };
     }
 }
+
+export async function transferTask(taskId: string, newAssignees: string[]) {
+    try {
+        await connectDB();
+        await TaskModel.findOneAndUpdate({ id: taskId }, { assignees: newAssignees });
+        revalidatePath(`/tasks/${taskId}`);
+        revalidatePath('/employee/[employeeId]/tasks', 'page');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to transfer task", error);
+        return { success: false, error: 'Failed to transfer task' };
+    }
+}
