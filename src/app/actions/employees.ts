@@ -71,3 +71,14 @@ export async function addEmployee(prevState: State, formData: FormData) {
     };
   }
 }
+
+export async function getEmployees() {
+    try {
+        await connectDB();
+        const employees = await Employee.find({}).lean();
+        return JSON.parse(JSON.stringify(employees));
+    } catch (error) {
+        console.error("Failed to fetch employees", error);
+        return [];
+    }
+}

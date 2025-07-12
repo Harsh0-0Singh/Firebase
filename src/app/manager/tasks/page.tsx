@@ -42,28 +42,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronsUpDown } from 'lucide-react';
 import { getTasksForManager, updateTaskStatus, submitTaskRating, createTask } from '@/app/actions/tasks';
-import EmployeeModel from '@/models/Employee';
-import ClientModel from '@/models/Client';
-
-async function getEmployees() {
-    try {
-        const employees = await EmployeeModel.find({}).lean();
-        return JSON.parse(JSON.stringify(employees));
-    } catch (error) {
-        console.error("Failed to fetch employees", error);
-        return [];
-    }
-}
-
-async function getClients() {
-    try {
-        const clients = await ClientModel.find({}).lean();
-        return JSON.parse(JSON.stringify(clients));
-    } catch (error) {
-        console.error("Failed to fetch clients", error);
-        return [];
-    }
-}
+import { getEmployees } from '@/app/actions/employees';
+import { getClients } from '@/app/actions/clients';
 
 export default function ManagerTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
