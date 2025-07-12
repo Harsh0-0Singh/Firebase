@@ -1,5 +1,6 @@
 
 
+
 import {
   Card,
   CardContent,
@@ -8,18 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { CheckCircle, Clock, XCircle, ListTodo, AlertTriangle, Activity } from "lucide-react"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import {
-  Bar,
-  BarChart as RechartsBarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts"
 import type { Task } from "@/lib/data"
 import { format, isSameDay, parseISO, compareDesc } from 'date-fns';
 import { Badge } from "@/components/ui/badge"
@@ -27,22 +16,7 @@ import Link from "next/link"
 import { TeamChat } from "@/components/team-chat"
 import TaskModel from '@/models/Task';
 import connectDB from "@/lib/mongoose"
-
-const chartData = [
-  { month: "January", completed: 186 },
-  { month: "February", completed: 305 },
-  { month: "March", completed: 237 },
-  { month: "April", completed: 273 },
-  { month: "May", completed: 209 },
-  { month: "June", completed: 214 },
-]
-
-const chartConfig = {
-  completed: {
-    label: "Tasks Completed",
-    color: "hsl(var(--primary))",
-  },
-}
+import { QuarterlyProgressChart } from "./_components/quarterly-progress-chart";
 
 async function getTasks() {
     try {
@@ -175,33 +149,7 @@ export default async function ManagerDashboard() {
         </div>
 
          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quarterly Progress</CardTitle>
-              <CardDescription>
-                Number of tasks completed each month.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-               <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                <RechartsBarChart data={chartData} accessibilityLayer>
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                  />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                   <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Bar dataKey="completed" fill="var(--color-completed)" radius={4} />
-                </RechartsBarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+          <QuarterlyProgressChart />
           <Card>
               <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Activity className="text-primary" /> Recent Activity</CardTitle>
