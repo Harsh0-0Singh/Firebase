@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { Globe, Settings, LayoutDashboard, GanttChartSquare, FileText, FilePenLine, MessageSquare, Users, Briefcase, ClipboardCheck, User, PackagePlus, PackageSearch } from "lucide-react";
 
@@ -59,7 +60,22 @@ interface AppLayoutProps {
 
 export function AppLayout({ navLinks, userName, userRole, userAvatar, children }: AppLayoutProps) {
   const pathname = usePathname();
-  const settingsLink = `/${userRole.toLowerCase()}/settings`;
+  const params = useParams();
+  
+  const getSettingsLink = () => {
+    const role = userRole.toLowerCase();
+    if (role === 'employee') {
+        const employeeId = params.employeeId;
+        return employeeId ? `/employee/${employeeId}/settings` : '/employee';
+    }
+    if (role === 'client') {
+        const clientId = params.clientId;
+        return clientId ? `/clients/${clientId}/settings` : '/';
+    }
+    return `/${role}/settings`;
+  }
+  
+  const settingsLink = getSettingsLink();
 
 
   return (
@@ -80,7 +96,7 @@ export function AppLayout({ navLinks, userName, userRole, userAvatar, children }
               return (
               <SidebarMenuItem key={link.href}>
                 <Link href={link.href} passHref>
-                  <SidebarMenuButton isActive={pathname.startsWith(link.href)} tooltip={link.label}>
+                  <SidebarMenuButton isActive={pathname === link.href || (link.href.length > 1 && pathname.startsWith(link.href) && (link.label !== 'Settings' && link.label !== 'Dashboard')) || (pathname === link.href)} tooltip={link.label}>
                     {Icon && <Icon />}
                     <span>{link.label}</span>
                   </SidebarMenuButton>
@@ -123,7 +139,7 @@ export function AppLayout({ navLinks, userName, userRole, userAvatar, children }
         <header className="flex items-center justify-between h-16 p-4 border-b">
           <SidebarTrigger className="md:hidden" />
           <div className="hidden text-2xl font-semibold md:block">
-            {navLinks.find(link => pathname.startsWith(link.href))?.label || 'Settings'}
+            {navLinks.find(link => pathname.startsWith(link.href))?.label || 'Dashboard'}
           </div>
           <div className="flex items-center gap-4 ml-auto">
              <Link href={settingsLink}>
