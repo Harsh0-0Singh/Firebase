@@ -15,6 +15,7 @@ import connectDB from "@/lib/mongoose";
 import EmployeeModel from "@/models/Employee";
 import { EmployeesList } from "./_components/employees-list";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const initialRoles = ["Manager", "Developer", "Designer"];
 
