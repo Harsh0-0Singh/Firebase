@@ -12,7 +12,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Rating } from "@/components/rating";
 import connectDB from "@/lib/mongoose";
-import type { Task } from "@/lib/data";
+import type { Task, Employee } from "@/lib/data";
 
 async function getEmployeeData(employeeId: string) {
     await connectDB();
@@ -22,7 +22,7 @@ async function getEmployeeData(employeeId: string) {
     }
     const tasks = await TaskModel.find({ assignees: employee.name }).lean();
     return {
-        employee: JSON.parse(JSON.stringify(employee)),
+        employee: JSON.parse(JSON.stringify(employee)) as Employee,
         tasks: JSON.parse(JSON.stringify(tasks)),
     }
 }
