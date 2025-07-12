@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -33,6 +32,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 async function getTask(taskId: string): Promise<Task | null> {
     await connectDB();
     const task = await TaskModel.findOne({ id: taskId }).lean();
+    // Ensure comments is an array, even if it's undefined/null in the DB
+    if (task && !task.comments) {
+      task.comments = [];
+    }
     return task ? JSON.parse(JSON.stringify(task)) : null;
 }
 
@@ -47,7 +50,7 @@ function BackButton() {
 
 function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRole: (role:string) => string }) {
     const [newComment, setNewComment] = useState('');
-    const [comments, setComments] = useState(task.comments);
+    const [comments, setComments] = useState(task.comments || []);
 
     const handleAddComment = () => {
         if (!newComment.trim()) return;
@@ -154,7 +157,7 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
             : prev.filter(name => name !== employeeName);
           return newAssignees;
       });
-  }
+    }
 
 
     return (
@@ -295,22 +298,35 @@ function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Tas
 export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
     const [task, setTask] = useState<Task | null>(null);
     const [employees, setEmployees] = useState<Employee[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadData() {
-            const [taskData, employeesData] = await Promise.all([
-                getTask(params.taskId),
-                getEmployees()
-            ]);
-            setTask(taskData);
-            setEmployees(employeesData);
+            setLoading(true);
+            try {
+                const [taskData, employeesData] = await Promise.all([
+                    getTask(params.taskId),
+                    getEmployees()
+                ]);
+                setTask(taskData);
+                setEmployees(employeesData);
+            } catch (error) {
+                console.error("Failed to load task data:", error);
+                // Optionally handle the error, e.g., show a toast message
+            } finally {
+                setLoading(false);
+            }
         }
         loadData();
     }, [params.taskId]);
 
-    if (!task) {
-        // You can show a loading spinner here
+    if (loading) {
         return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    }
+
+    if (!task) {
+        // You can render a "Not Found" message or component here
+        return <div className="flex justify-center items-center h-screen">Task not found.</div>;
     }
 
     return <TaskDetailPageContent initialTask={task} allEmployees={employees} />;
