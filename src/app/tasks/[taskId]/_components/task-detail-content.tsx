@@ -44,7 +44,7 @@ function FormattedTime({ timestamp }: { timestamp: string }) {
     }, [timestamp]);
 
     if (!formattedDate) {
-        return null; // Or a placeholder
+        return null;
     }
 
     return (
@@ -55,37 +55,7 @@ function FormattedTime({ timestamp }: { timestamp: string }) {
 }
 
 
-function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded, canComment }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: (Employee | Client) | null, onCommentAdded: (newComment: Comment) => void, canComment: boolean }) {
-    const [newComment, setNewComment] = useState('');
-    const { toast } = useToast();
-
-    const handleAddComment = async () => {
-        if (!newComment.trim() || !currentUser) return;
-        
-        const commentContent = newComment;
-        setNewComment('');
-
-        const result = await addCommentToTask(task.id, currentUser.id, commentContent);
-
-        if (result.success && result.comment) {
-            onCommentAdded(result.comment);
-        } else {
-            setNewComment(commentContent); // Restore textarea content
-            toast({
-                title: "Error",
-                description: result.error || "Failed to post comment.",
-                variant: 'destructive',
-            });
-        }
-    };
-    
-    const getAuthorAvatar = (author: Employee | Client) => {
-        if ('avatar' in author && author.avatar) {
-            return author.avatar;
-        }
-        return 'https://placehold.co/40x40.png'; // Default for client
-    };
-    
+function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRole: (role:string) => string }) {
     return (
          <Card>
             <CardHeader>
@@ -114,26 +84,6 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded, c
                     {task.comments.length === 0 && <p className="text-muted-foreground text-center py-4">No comments yet.</p>}
                 </div>
             </CardContent>
-            {canComment && currentUser && (
-                <CardFooter>
-                    <div className="w-full flex gap-3">
-                        <Avatar>
-                            <AvatarImage src={getAuthorAvatar(currentUser)} />
-                            <AvatarFallback>{currentUser?.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="w-full space-y-2">
-                            <Textarea 
-                                placeholder="Add a comment..." 
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                            />
-                            <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                                Post Comment
-                            </Button>
-                        </div>
-                    </div>
-                </CardFooter>
-            )}
         </Card>
     )
 }
@@ -224,6 +174,8 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 
 export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, taskClient }: { initialTask: Task, allEmployees: Employee[], currentUser: (Employee | Client) | null, taskClient: Client | null }) {
     const [task, setTask] = useState(initialTask);
+    const [newComment, setNewComment] = useState('');
+    const { toast } = useToast();
     
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -262,6 +214,33 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, 
     const isTaskClient = currentUser && 'contactEmail' in currentUser && currentUser.id === taskClient?.id;
 
     const canComment = isManager || isAssignedEmployee || isTaskClient;
+
+    const handleAddComment = async () => {
+        if (!newComment.trim() || !currentUser) return;
+        
+        const commentContent = newComment;
+        setNewComment('');
+
+        const result = await addCommentToTask(task.id, currentUser.id, commentContent);
+
+        if (result.success && result.comment) {
+            handleCommentAdded(result.comment);
+        } else {
+            setNewComment(commentContent); // Restore textarea content
+            toast({
+                title: "Error",
+                description: result.error || "Failed to post comment.",
+                variant: 'destructive',
+            });
+        }
+    };
+    
+    const getAuthorAvatar = (author: Employee | Client) => {
+        if ('avatar' in author && author.avatar) {
+            return author.avatar;
+        }
+        return 'https://placehold.co/40x40.png'; // Default for client
+    };
 
     return (
         <div className="min-h-screen bg-muted/40">
@@ -304,10 +283,32 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUser, 
                     <CommentSection 
                         task={task} 
                         getAvatarForRole={getAvatarForRole} 
-                        currentUser={currentUser} 
-                        onCommentAdded={handleCommentAdded}
-                        canComment={canComment}
                     />
+                    {canComment && currentUser && (
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Add a Comment</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="w-full flex gap-3">
+                                    <Avatar>
+                                        <AvatarImage src={getAuthorAvatar(currentUser)} />
+                                        <AvatarFallback>{currentUser?.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="w-full space-y-2">
+                                        <Textarea 
+                                            placeholder="Share an update or ask a question..." 
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                        />
+                                        <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                                            Post Comment
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                         </Card>
+                    )}
                 </div>
                 <div className="space-y-6">
                     <Card>
