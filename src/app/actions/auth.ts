@@ -33,7 +33,19 @@ export async function login(prevState: any, formData: FormData) {
             role = 'Client';
         }
 
-        if (!userDoc || userDoc.password !== password) {
+        if (!userDoc) {
+            return { message: 'Invalid username or password.' };
+        }
+
+        // ONE-TIME FIX: If manager 'base' has a hashed password, reset it.
+        if (userDoc.role === 'Manager' && userDoc.username === 'base' && userDoc.password.startsWith('$2a$')) {
+            if (password === 'Base@!9098') {
+                userDoc.password = 'Base@!9098';
+                await userDoc.save();
+            }
+        }
+        
+        if (userDoc.password !== password) {
             return { message: 'Invalid username or password.' };
         }
         
