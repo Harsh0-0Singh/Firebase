@@ -1,7 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,47 +34,50 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { type Client } from "@/lib/data";
 import { Globe } from 'lucide-react';
+import { addClient } from '@/app/actions/clients';
 
-// TODO: Convert this to use server actions to add clients
-export default function ManagerClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [newClientName, setNewClientName] = useState('');
-  const [newClientContact, setNewClientContact] = useState('');
-  const [newClientUsername, setNewClientUsername] = useState('');
-  const [newClientPassword, setNewClientPassword] = useState('');
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending ? 'Saving...' : 'Save Client'}
+        </Button>
+    )
+}
+
+interface ManagerClientsPageProps {
+    initialClients: Client[];
+}
+
+export default function ManagerClientsPage({ initialClients }: ManagerClientsPageProps) {
+  const [clients, setClients] = useState<Client[]>(initialClients);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
-  const handleAddClient = () => {
-    if (!newClientName.trim() || !newClientContact.trim() || !newClientUsername.trim() || !newClientPassword.trim()) {
+  const initialState = { message: null, errors: {} };
+  const [state, formAction] = useActionState(addClient, initialState);
+  
+  useEffect(() => {
+    setClients(initialClients);
+  }, [initialClients]);
+
+  useEffect(() => {
+    if (state.message?.startsWith('Added client')) {
+      toast({
+        title: "Client Added",
+        description: state.message,
+      });
+      setIsDialogOpen(false);
+      router.refresh();
+    } else if (state.message) {
       toast({
         title: "Error",
-        description: "Please fill out all fields.",
+        description: state.message,
         variant: "destructive"
       });
-      return;
     }
-
-    const newClient: Client = {
-      id: `C${clients.length + 1}`,
-      name: newClientName,
-      contactEmail: newClientContact,
-      username: newClientUsername,
-      password: newClientPassword
-    };
-
-    setClients([...clients, newClient]);
-    toast({
-      title: "Client Added",
-      description: `${newClient.name} has been added.`,
-    });
-
-    setNewClientName('');
-    setNewClientContact('');
-    setNewClientUsername('');
-    setNewClientPassword('');
-    setIsDialogOpen(false);
-  };
+  }, [state, toast, router]);
 
   return (
     <Card>
@@ -87,63 +92,47 @@ export default function ManagerClientsPage() {
               <Button>Add Client</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Client</DialogTitle>
-                <DialogDescription>
-                  Enter the details for the new client.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={newClientName}
-                    onChange={(e) => setNewClientName(e.target.value)}
-                    placeholder="e.g. Innovate Corp"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact">
-                    Contact Email
-                  </Label>
-                  <Input
-                    id="contact"
-                    type="email"
-                    value={newClientContact}
-                    onChange={(e) => setNewClientContact(e.target.value)}
-                    placeholder="e.g. contact@innovate.com"
-                  />
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="username">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    value={newClientUsername}
-                    onChange={(e) => setNewClientUsername(e.target.value)}
-                    placeholder="e.g. innovatecorp"
-                  />
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="password">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={newClientPassword}
-                    onChange={(e) => setNewClientPassword(e.target.value)}
-                    placeholder="Set an initial password"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" onClick={handleAddClient}>Save Client</Button>
-              </DialogFooter>
+              <form action={formAction}>
+                  <DialogHeader>
+                    <DialogTitle>Add New Client</DialogTitle>
+                    <DialogDescription>
+                      Enter the details for the new client.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input id="name" name="name" placeholder="e.g. Innovate Corp" aria-describedby="name-error" />
+                      <div id="name-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.name && state.errors.name.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contactEmail">Contact Email</Label>
+                      <Input id="contactEmail" name="contactEmail" type="email" placeholder="e.g. contact@innovate.com" aria-describedby="email-error" />
+                      <div id="email-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.contactEmail && state.errors.contactEmail.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input id="username" name="username" placeholder="e.g. innovatecorp" aria-describedby="username-error" />
+                       <div id="username-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.username && state.errors.username.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" name="password" type="password" placeholder="Set an initial password" aria-describedby="password-error"/>
+                       <div id="password-error" aria-live="polite" aria-atomic="true">
+                        {state.errors?.password && state.errors.password.map((error: string) => <p className="mt-2 text-sm text-destructive" key={error}>{error}</p>)}
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <SubmitButton />
+                  </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         </div>

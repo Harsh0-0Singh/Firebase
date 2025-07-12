@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -14,38 +14,48 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Globe } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { login } from '@/app/actions/auth';
+import { useFormStatus } from 'react-dom';
+import { useEffect } from 'react';
+
+function LoginButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" className="w-full" size="lg" disabled={pending}>
+            {pending ? 'Logging in...' : 'Login'}
+        </Button>
+    )
+}
+
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  
+  const initialState = { message: '', user: null, role: null };
+  const [state, formAction] = useActionState(login, initialState);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // In a real app, you would make an API call to a login endpoint.
-    // Here we will simulate it. We can create a dedicated server action later.
-    
-    // This is a simplified example. A proper implementation would involve fetching users from DB.
-    // For now, we will have a hardcoded check for the initial manager.
-    if (username === 'base' && password === 'Base@!9098') {
-        toast({
-            title: 'Login Successful',
-            description: `Welcome! Redirecting you to the manager dashboard.`,
-        });
+  useEffect(() => {
+    if (state.user && state.role) {
+      toast({
+        title: 'Login Successful',
+        description: `Welcome, ${state.user}! Redirecting you to your dashboard.`,
+      });
+      if (state.role === 'Manager') {
         router.push('/manager/dashboard');
-        return;
-    }
-
-    // A real implementation would query the database for the user.
-    // For now, this part is disabled until other user data is in the DB.
-    toast({
+      } else if (state.role === 'Client') {
+        router.push(`/clients/${state.user.id}`);
+      } else {
+        router.push('/employee/dashboard');
+      }
+    } else if (state.message) {
+       toast({
         title: 'Login Failed',
-        description: 'Invalid username or password. Please try again.',
+        description: state.message,
         variant: 'destructive',
-    });
-  };
+      });
+    }
+  }, [state, router, toast]);
 
 
   return (
@@ -68,14 +78,13 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form action={formAction} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input 
-                id="username" 
-                placeholder="Enter your username" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="username"
+                name="username"
+                placeholder="Enter your username"
                 required
               />
             </div>
@@ -83,16 +92,16 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input 
                 id="password" 
+                name="password"
                 type="password" 
                 placeholder="Enter your password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <Button type="submit" className="w-full" size="lg">
-              Login
-            </Button>
+             <div aria-live="polite" aria-atomic="true">
+                {state.message && <p className="mt-2 text-sm text-destructive">{state.message}</p>}
+             </div>
+            <LoginButton />
           </form>
         </CardContent>
       </Card>
