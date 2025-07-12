@@ -36,40 +36,22 @@ function BackButton() {
     )
 }
 
-function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee | null }) {
+function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee | null, onCommentAdded: (newComment: Comment) => void }) {
     const [newComment, setNewComment] = useState('');
-    const [comments, setComments] = useState<Comment[]>(task.comments || []);
     const { toast } = useToast();
-
-    useEffect(() => {
-        setComments(task.comments || []);
-    }, [task.comments]);
+    const comments = task.comments || [];
 
     const handleAddComment = async () => {
         if (!newComment.trim() || !currentUser) return;
         
-        const tempId = `temp-${Date.now()}`;
-        const optimisticComment: Comment = {
-            id: tempId,
-            authorName: currentUser.name,
-            authorRole: currentUser.role as any,
-            content: newComment,
-            timestamp: new Date().toISOString(),
-        };
-
-        // Optimistically update UI
-        setComments(prev => [...prev, optimisticComment]);
         const commentContent = newComment;
         setNewComment('');
 
         const result = await addCommentToTask(task.id, currentUser.id, commentContent);
 
         if (result.success && result.comment) {
-            // Replace temporary comment with the one from the server
-            setComments(prev => prev.map(c => c.id === tempId ? result.comment! : c));
+            onCommentAdded(result.comment);
         } else {
-            // Rollback on failure
-            setComments(prev => prev.filter(c => c.id !== tempId));
             setNewComment(commentContent); // Restore textarea content
             toast({
                 title: "Error",
@@ -239,12 +221,21 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId
     }
     
     const getAvatarForRole = (role: string) => {
-        const employee = allEmployees.find(e => e.role === role);
-        return employee ? employee.avatar : 'https://placehold.co/40x40.png';
+        // Find an employee with the given role to get a representative avatar.
+        // In a real app, you might have specific role avatars.
+        const employeeWithRole = allEmployees.find(e => e.role === role);
+        return employeeWithRole ? employeeWithRole.avatar : 'https://placehold.co/40x40.png';
     }
     
     const handleTaskTransferred = (newAssignees: string[]) => {
         setTask(prevTask => ({ ...prevTask, assignees: newAssignees }));
+    }
+
+    const handleCommentAdded = (newComment: Comment) => {
+        setTask(prevTask => ({
+            ...prevTask,
+            comments: [...(prevTask.comments || []), newComment]
+        }));
     }
 
     const isManager = currentUser?.role === 'Manager';
@@ -287,7 +278,12 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId
                             </div>
                         </CardFooter>
                     </Card>
-                    <CommentSection task={task} getAvatarForRole={getAvatarForRole} currentUser={currentUser} />
+                    <CommentSection 
+                        task={task} 
+                        getAvatarForRole={getAvatarForRole} 
+                        currentUser={currentUser} 
+                        onCommentAdded={handleCommentAdded}
+                    />
                 </div>
                 <div className="space-y-6">
                     <Card>
@@ -317,3 +313,5 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId
         </div>
     );
 }
+
+    
