@@ -5,6 +5,7 @@ import { z } from 'zod';
 import connectDB from '@/lib/mongoose';
 import Employee from '@/models/Employee';
 import Client from '@/models/Client';
+import bcrypt from 'bcryptjs';
 
 const loginSchema = z.object({
     username: z.string(),
@@ -35,6 +36,16 @@ export async function login(prevState: any, formData: FormData) {
 
         if (!user) {
             return { message: 'Invalid username or password.' };
+        }
+        
+        // ** ONE-TIME-FIX for existing plaintext passwords **
+        // Check if the password is NOT a hash. bcrypt hashes start with '$2a$', '$2b$', or '$2y$'.
+        if (user.role === 'Manager' && !user.password.startsWith('$2')) {
+            // If the plaintext password matches, hash it and save it.
+            if (user.password === password) {
+                user.password = await bcrypt.hash(password, 10);
+                await user.save();
+            }
         }
         
         const isPasswordMatch = await user.comparePassword(password);
