@@ -226,31 +226,7 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 
 export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId }: { initialTask: Task, allEmployees: Employee[], currentUserId: string | null }) {
     const [task, setTask] = useState(initialTask);
-    const [currentUser, setCurrentUser] = useState<Employee | null>(null);
-
-    useEffect(() => {
-        setTask(initialTask);
-        if(currentUserId) {
-            const user = allEmployees.find(e => e.id === currentUserId);
-            setCurrentUser(user || null);
-        }
-    }, [initialTask, allEmployees, currentUserId]);
-
-    if (!task) {
-        return (
-             <div className="min-h-screen bg-muted/40">
-                <header className="bg-background border-b">
-                    <div className="container mx-auto flex items-center p-4">
-                        <BackButton />
-                        <h1 className="text-xl font-semibold ml-2">Loading Task...</h1>
-                    </div>
-                </header>
-                <main className="container mx-auto p-4 md:p-8">
-                    <p>Loading...</p>
-                </main>
-            </div>
-        )
-    }
+    const currentUser = allEmployees.find(e => e.id === currentUserId) || null;
     
     const getStatusColor = (status: string) => {
         switch (status) {
