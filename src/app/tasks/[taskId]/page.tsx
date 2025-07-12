@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -24,9 +25,6 @@ import { useToast } from '@/hooks/use-toast';
 import { transferTask } from '@/app/actions/tasks';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import TaskModel from '@/models/Task';
-import EmployeeModel from '@/models/Employee';
-import connectDB from '@/lib/mongoose';
 import { notFound } from 'next/navigation';
 
 
@@ -307,6 +305,10 @@ function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask?: Ta
 }
 
 // This is now a Server Component responsible for fetching data
+import connectDB from '@/lib/mongoose';
+import TaskModel from '@/models/Task';
+import EmployeeModel from '@/models/Employee';
+
 export default async function TaskDetailPage({ params }: { params: { taskId: string } }) {
     await connectDB();
     const taskData = await TaskModel.findOne({ id: params.taskId }).lean();
