@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { taskRequests as initialTaskRequests, employees, TaskRequest, tasks as initialTasks, Task, messages as initialMessages, Message, NotificationMessage } from "@/lib/data";
+import { TaskRequest, Employee, Task, NotificationMessage } from "@/lib/data";
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -24,16 +24,52 @@ import { ChevronsUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
+import TaskRequestModel from '@/models/TaskRequest';
+import EmployeeModel from '@/models/Employee';
+import TaskModel from '@/models/Task';
+import MessageModel from '@/models/Message';
+
+
+async function getTaskRequests() {
+    try {
+        const requests = await TaskRequestModel.find({ status: 'Pending' }).lean();
+        return JSON.parse(JSON.stringify(requests));
+    } catch (error) {
+        console.error("Failed to fetch task requests", error);
+        return [];
+    }
+}
+
+async function getEmployees() {
+    try {
+        const employees = await EmployeeModel.find({}).lean();
+        return JSON.parse(JSON.stringify(employees));
+    } catch (error) {
+        console.error("Failed to fetch employees", error);
+        return [];
+    }
+}
 
 
 export default function TaskRequestsPage() {
-  const [requests, setRequests] = useState(initialTaskRequests);
-  const [tasks, setTasks] = useState(initialTasks);
-  const [messages, setMessages] = useState(initialMessages);
+  const [requests, setRequests] = useState<TaskRequest[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<Record<string, string[]>>({});
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function loadData() {
+        const [requestsData, employeesData] = await Promise.all([
+            getTaskRequests(),
+            getEmployees()
+        ]);
+        setRequests(requestsData);
+        setEmployees(employeesData);
+    }
+    loadData();
+  }, []);
   
-  const handleApprove = (request: TaskRequest) => {
+  const handleApprove = async (request: TaskRequest) => {
     const assignees = selectedAssignees[request.id] || [];
     if (assignees.length === 0) {
       toast({
@@ -44,8 +80,11 @@ export default function TaskRequestsPage() {
       return;
     }
     
-    const newTask: Task = {
-      id: `T${tasks.length + 1}`,
+    const tasksCount = await TaskModel.countDocuments();
+    const newTaskId = `T${tasksCount + 1}`;
+
+    const newTaskData: Task = {
+      id: newTaskId,
       title: request.title,
       description: request.description,
       assignees: assignees,
@@ -57,40 +96,59 @@ export default function TaskRequestsPage() {
       createdAt: format(new Date(), 'yyyy-MM-dd'),
       comments: [],
     };
-    setTasks([...tasks, newTask]);
-    
-    // Add notification to chat
-    const newNotification: NotificationMessage = {
-      id: `M${messages.length + 1}`,
+
+    const messagesCount = await MessageModel.countDocuments();
+    const newNotificationData: NotificationMessage = {
+      id: `M${messagesCount + 1}`,
       type: 'notification',
-      content: `approved request "${newTask.title}" and assigned it to ${newTask.assignees.join(', ')}.`,
+      content: `approved request "${newTaskData.title}" and assigned it to ${newTaskData.assignees.join(', ')}.`,
       authorId: '1', // Alex Doe
       timestamp: new Date().toISOString(),
-      taskId: newTask.id,
+      taskId: newTaskId,
     };
-    setMessages([...messages, newNotification]);
-
-    setRequests(requests.filter(r => r.id !== request.id));
     
-    toast({
-      title: 'Task Approved!',
-      description: `The request "${request.title}" has been approved and assigned.`,
-    });
+    try {
+        const newTask = new TaskModel(newTaskData);
+        const newNotification = new MessageModel(newNotificationData);
+        
+        await Promise.all([
+            newTask.save(),
+            newNotification.save(),
+            TaskRequestModel.findByIdAndUpdate(request._id, { status: 'Approved' })
+        ]);
 
-    setSelectedAssignees(prev => {
-        const next = {...prev};
-        delete next[request.id];
-        return next;
-    });
+        setRequests(requests.filter(r => r.id !== request.id));
+        
+        toast({
+          title: 'Task Approved!',
+          description: `The request "${request.title}" has been approved and assigned.`,
+        });
+
+        setSelectedAssignees(prev => {
+            const next = {...prev};
+            delete next[request.id];
+            return next;
+        });
+
+    } catch (error) {
+        console.error("Failed to approve task", error);
+        toast({ title: "Error", description: "Could not approve the task.", variant: "destructive" });
+    }
   };
 
-  const handleReject = (requestId: string) => {
-     setRequests(requests.filter(r => r.id !== requestId));
-     toast({
-        title: 'Request Rejected',
-        description: 'The task request has been rejected.',
-        variant: 'destructive',
-     })
+  const handleReject = async (request: TaskRequest) => {
+     try {
+        await TaskRequestModel.findByIdAndUpdate(request._id, { status: 'Rejected' });
+        setRequests(requests.filter(r => r.id !== request.id));
+        toast({
+            title: 'Request Rejected',
+            description: 'The task request has been rejected.',
+            variant: 'destructive',
+        })
+     } catch (error) {
+        console.error("Failed to reject task", error);
+        toast({ title: "Error", description: "Could not reject the task.", variant: "destructive" });
+     }
   }
   
   const handleAssigneeChange = (checked: boolean, requestId: string, employeeName: string) => {
@@ -174,7 +232,7 @@ export default function TaskRequestsPage() {
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => handleApprove(request)}>Approve</Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleReject(request.id)}>Reject</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleReject(request)}>Reject</Button>
                       </div>
                     </div>
                 </AccordionContent>

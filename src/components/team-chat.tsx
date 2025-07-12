@@ -7,10 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { employees, messages as initialMessages, Message, ChatMessage, NotificationMessage } from "@/lib/data";
+import { Message, ChatMessage, NotificationMessage, Employee } from "@/lib/data";
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import Link from 'next/link';
 import { Megaphone, Send } from 'lucide-react';
+import EmployeeModel from '@/models/Employee';
+import MessageModel from '@/models/Message';
 
 interface TeamChatProps {
     userId: string;
@@ -50,24 +52,71 @@ function FormattedNotificationTime({ timestamp }: { timestamp: string }) {
     )
 }
 
+// A helper function to fetch data and stringify it
+async function getEmployees() {
+  try {
+    const employees = await EmployeeModel.find({}).lean();
+    return JSON.parse(JSON.stringify(employees));
+  } catch (error) {
+    console.error("Failed to fetch employees", error);
+    return [];
+  }
+}
+
+async function getMessages() {
+  try {
+    const messages = await MessageModel.find({}).sort({ timestamp: 'asc' }).lean();
+    return JSON.parse(JSON.stringify(messages));
+  } catch (error) {
+    console.error("Failed to fetch messages", error);
+    return [];
+  }
+}
+
 export function TeamChat({ userId }: TeamChatProps) {
-    const [messages, setMessages] = useState<Message[]>(initialMessages);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const currentUser = employees.find(e => e.id === userId);
 
-    const handleSendMessage = () => {
+    useEffect(() => {
+      async function loadData() {
+        const [messagesData, employeesData] = await Promise.all([
+          getMessages(),
+          getEmployees(),
+        ]);
+        setMessages(messagesData);
+        setEmployees(employeesData);
+      }
+      loadData();
+    }, []);
+
+
+    const handleSendMessage = async () => {
         if (!newMessage.trim() || !currentUser) return;
 
         const chatMessage: ChatMessage = {
-            id: `M${messages.length + 1}`,
+            id: `M${messages.length + Math.floor(Math.random() * 1000)}`,
             type: 'chat',
             authorId: currentUser.id,
             content: newMessage.trim(),
             timestamp: new Date().toISOString(),
         };
-
+        
+        // Optimistically update UI
         setMessages([...messages, chatMessage]);
         setNewMessage('');
+        
+        // Save to DB
+        try {
+            const messageDoc = new MessageModel(chatMessage);
+            await messageDoc.save();
+        } catch (error) {
+            console.error("Failed to save message", error);
+            // Optionally rollback UI update
+            setMessages(messages.filter(m => m.id !== chatMessage.id));
+        }
+
     };
 
     const getAuthor = (authorId: string) => {

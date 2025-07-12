@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { tasks as initialTasks, employees, Task, TaskStatus, clients, messages as initialMessages, NotificationMessage } from "@/lib/data";
+import { Task, TaskStatus, Employee, Client, NotificationMessage } from "@/lib/data";
 import { Rating } from '@/components/rating';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -40,10 +40,46 @@ import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronsUpDown } from 'lucide-react';
+import TaskModel from '@/models/Task';
+import EmployeeModel from '@/models/Employee';
+import ClientModel from '@/models/Client';
+import MessageModel from '@/models/Message';
+
+
+async function getTasks() {
+    try {
+        const tasks = await TaskModel.find({}).lean();
+        return JSON.parse(JSON.stringify(tasks));
+    } catch (error) {
+        console.error("Failed to fetch tasks", error);
+        return [];
+    }
+}
+
+async function getEmployees() {
+    try {
+        const employees = await EmployeeModel.find({}).lean();
+        return JSON.parse(JSON.stringify(employees));
+    } catch (error) {
+        console.error("Failed to fetch employees", error);
+        return [];
+    }
+}
+
+async function getClients() {
+    try {
+        const clients = await ClientModel.find({}).lean();
+        return JSON.parse(JSON.stringify(clients));
+    } catch (error) {
+        console.error("Failed to fetch clients", error);
+        return [];
+    }
+}
 
 export default function ManagerTasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [messages, setMessages] = useState(initialMessages);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [rating, setRating] = useState(0);
   const { toast } = useToast();
 
@@ -54,22 +90,48 @@ export default function ManagerTasksPage() {
   const [newTaskClient, setNewTaskClient] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, status: newStatus } : task
-    ));
+  useEffect(() => {
+    async function loadData() {
+        const [tasksData, employeesData, clientsData] = await Promise.all([
+            getTasks(),
+            getEmployees(),
+            getClients()
+        ]);
+        setTasks(tasksData);
+        setEmployees(employeesData);
+        setClients(clientsData);
+    }
+    loadData();
+  }, []);
+
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    try {
+        await TaskModel.findOneAndUpdate({ id: taskId }, { status: newStatus });
+        setTasks(tasks.map(task => 
+          task.id === taskId ? { ...task, status: newStatus } : task
+        ));
+    } catch (error) {
+        console.error("Failed to update task status", error);
+        toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+    }
   };
   
-  const handleRatingSubmit = (task: Task) => {
-    setTasks(tasks.map(t => t.id === task.id ? {...t, rating: rating} : t));
-    toast({
-      title: "Rating Submitted!",
-      description: `You gave the team ${rating} stars for completing "${task.title}".`,
-    });
-    setRating(0);
+  const handleRatingSubmit = async (task: Task) => {
+    try {
+      await TaskModel.findOneAndUpdate({ id: task.id }, { rating: rating });
+      setTasks(tasks.map(t => t.id === task.id ? {...t, rating: rating} : t));
+      toast({
+        title: "Rating Submitted!",
+        description: `You gave the team ${rating} stars for completing "${task.title}".`,
+      });
+      setRating(0);
+    } catch (error) {
+      console.error("Failed to submit rating", error);
+      toast({ title: "Error", description: "Failed to submit rating", variant: "destructive" });
+    }
   };
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!newTaskTitle || newTaskAssignees.length === 0 || !newTaskClient || !newTaskDueDate) {
        toast({
         title: "Error",
@@ -78,8 +140,12 @@ export default function ManagerTasksPage() {
       });
       return;
     }
-    const newTask: Task = {
-      id: `T${tasks.length + 1}`,
+
+    const tasksCount = await TaskModel.countDocuments();
+    const newTaskId = `T${tasksCount + 1}`;
+    
+    const newTaskData: Task = {
+      id: newTaskId,
       title: newTaskTitle,
       description: newTaskDescription,
       assignees: newTaskAssignees,
@@ -91,30 +157,44 @@ export default function ManagerTasksPage() {
       createdAt: format(new Date(), 'yyyy-MM-dd'),
       comments: [],
     };
-    setTasks([...tasks, newTask]);
-
-    const newNotification: NotificationMessage = {
-      id: `M${messages.length + 1}`,
+    
+    const messagesCount = await MessageModel.countDocuments();
+    const newNotificationData: NotificationMessage = {
+      id: `M${messagesCount + 1}`,
       type: 'notification',
-      content: `created a new task "${newTask.title}" and assigned it to ${newTask.assignees.join(', ')}.`,
+      content: `created a new task "${newTaskData.title}" and assigned it to ${newTaskData.assignees.join(', ')}.`,
       authorId: '1', // Alex Doe
       timestamp: new Date().toISOString(),
-      taskId: newTask.id,
+      taskId: newTaskData.id,
     };
-    setMessages([...messages, newNotification]);
 
-    toast({
-      title: "Task Created!",
-      description: `Task "${newTask.title}" has been assigned.`
-    });
-    
-    // Reset form
-    setNewTaskTitle('');
-    setNewTaskDescription('');
-    setNewTaskAssignees([]);
-    setNewTaskClient('');
-    setNewTaskDueDate('');
-    setIsCreateDialogOpen(false);
+    try {
+        const newTask = new TaskModel(newTaskData);
+        const newNotification = new MessageModel(newNotificationData);
+        
+        await Promise.all([
+            newTask.save(),
+            newNotification.save()
+        ]);
+        
+        setTasks([...tasks, newTaskData]);
+
+        toast({
+          title: "Task Created!",
+          description: `Task "${newTaskTitle}" has been assigned.`
+        });
+        
+        // Reset form
+        setNewTaskTitle('');
+        setNewTaskDescription('');
+        setNewTaskAssignees([]);
+        setNewTaskClient('');
+        setNewTaskDueDate('');
+        setIsCreateDialogOpen(false);
+    } catch (error) {
+        console.error("Failed to create task", error);
+        toast({ title: "Error", description: "Failed to create task", variant: "destructive" });
+    }
   }
 
   const getStatusColor = (status: TaskStatus) => {
@@ -248,7 +328,7 @@ export default function ManagerTasksPage() {
                 <TableCell>{task.dueDate}</TableCell>
                 <TableCell>
                   <Select 
-                    defaultValue={task.status} 
+                    value={task.status} 
                     onValueChange={(value: TaskStatus) => handleStatusChange(task.id, value)}
                   >
                     <SelectTrigger className="w-[140px] focus:ring-0 focus:ring-offset-0 border-0 shadow-none p-0 bg-transparent">
