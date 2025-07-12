@@ -41,6 +41,10 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
     const [comments, setComments] = useState<Comment[]>(task.comments || []);
     const { toast } = useToast();
 
+    useEffect(() => {
+        setComments(task.comments || []);
+    }, [task.comments]);
+
     const handleAddComment = async () => {
         if (!newComment.trim() || !currentUser) return;
         
@@ -107,7 +111,7 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
                                         {format(parseISO(comment.timestamp), 'PPp')}
                                     </time>
                                 </div>
-                                <p className="text-sm text-foreground">{comment.content}</p>
+                                <div className="text-sm text-foreground">{comment.content}</div>
                             </div>
                         </div>
                     ))}
