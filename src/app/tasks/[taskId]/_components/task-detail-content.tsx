@@ -36,6 +36,25 @@ function BackButton() {
     )
 }
 
+function FormattedTime({ timestamp }: { timestamp: string }) {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        setFormattedDate(format(parseISO(timestamp), 'PPp'));
+    }, [timestamp]);
+
+    if (!formattedDate) {
+        return null; // Or a placeholder
+    }
+
+    return (
+        <time className="text-xs text-muted-foreground">
+            {formattedDate}
+        </time>
+    );
+}
+
+
 function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }: { task: Task, getAvatarForRole: (role:string) => string, currentUser: Employee | null, onCommentAdded: (newComment: Comment) => void }) {
     const [newComment, setNewComment] = useState('');
     const { toast } = useToast();
@@ -80,9 +99,7 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
                                         {comment.authorName}
                                         <Badge variant="outline" className="ml-2 text-xs">{comment.authorRole}</Badge>
                                     </div>
-                                    <time className="text-xs text-muted-foreground">
-                                        {format(parseISO(comment.timestamp), 'PPp')}
-                                    </time>
+                                    <FormattedTime timestamp={comment.timestamp} />
                                 </div>
                                 <div className="text-sm text-foreground">{comment.content}</div>
                             </div>
