@@ -32,15 +32,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { type Client } from "@/lib/data";
 import { Globe } from 'lucide-react';
-import connectDB from '@/lib/mongoose';
-import ClientModel from '@/models/Client';
+import { getClients } from '@/app/actions/clients';
 
-
-async function getClients() {
-    await connectDB();
-    const clients = await ClientModel.find({}).lean();
-    return JSON.parse(JSON.stringify(clients));
-}
 
 export default function ManagerClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
