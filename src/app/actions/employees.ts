@@ -55,7 +55,7 @@ export async function addEmployee(prevState: State, formData: FormData) {
       name,
       role,
       username,
-      password, // The password will be hashed by the pre-save hook in the model
+      password,
       points: 0,
       avatar: 'https://placehold.co/40x40.png',
     });
