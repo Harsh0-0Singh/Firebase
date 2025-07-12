@@ -118,6 +118,7 @@ export async function transferTask(taskId: string, newAssignees: string[]) {
         await TaskModel.findOneAndUpdate({ id: taskId }, { assignees: newAssignees });
         revalidatePath(`/tasks/${taskId}`);
         revalidatePath('/employee/[employeeId]/tasks', 'page');
+        revalidatePath('/manager/tasks');
         return { success: true };
     } catch (error) {
         console.error("Failed to transfer task", error);

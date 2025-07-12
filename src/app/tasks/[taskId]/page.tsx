@@ -23,13 +23,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { transferTask } from '@/app/actions/tasks';
 import { getEmployees } from '@/app/actions/employees';
@@ -60,14 +53,14 @@ function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRo
         if (!newComment.trim()) return;
 
         const comment: Comment = {
-            id: `C${task.comments.length + 1}`,
+            id: `C${(comments || []).length + 1}`,
             authorName: 'Alex Doe', // Mock current user
             authorRole: 'Manager', // Mock current user role
             content: newComment,
             timestamp: new Date().toISOString(),
         };
         // TODO: This should call a server action to save the comment
-        setComments([...comments, comment]);
+        setComments([...(comments || []), comment]);
         setNewComment('');
     };
 
@@ -78,7 +71,7 @@ function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRo
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
-                    {comments.map(comment => (
+                    {(comments || []).map(comment => (
                         <div key={comment.id} className="flex gap-3">
                             <Avatar>
                                 <AvatarImage src={getAvatarForRole(comment.authorRole)} />
@@ -220,7 +213,6 @@ function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Tas
     }
     
     const getAvatarForRole = (role: string) => {
-        // In a real app, you'd have user profiles with avatars
         switch(role) {
             case 'Manager': return 'https://placehold.co/40x40.png';
             case 'Employee': return 'https://placehold.co/40x40.png';
