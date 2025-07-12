@@ -90,10 +90,10 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
                             </Avatar>
                             <div className="flex-1 bg-muted/50 p-3 rounded-lg">
                                 <div className="flex justify-between items-center mb-1">
-                                    <p className="font-semibold">
+                                    <div className="font-semibold">
                                         {comment.authorName}
                                         <Badge variant="outline" className="ml-2 text-xs">{comment.authorRole}</Badge>
-                                    </p>
+                                    </div>
                                     <time className="text-xs text-muted-foreground">
                                         {format(parseISO(comment.timestamp), 'PPp')}
                                     </time>
