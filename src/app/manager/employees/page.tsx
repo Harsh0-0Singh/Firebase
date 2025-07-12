@@ -39,11 +39,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { employees as initialEmployees, Employee } from "@/lib/data";
+import type { Employee } from "@/lib/data";
 import { Medal, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { addEmployee } from '@/app/actions/employees';
+import EmployeeModel from '@/models/Employee';
 
 const initialRoles = ["Manager", "Developer", "Designer"];
 
@@ -56,12 +57,31 @@ function SubmitButton() {
     )
 }
 
+// A helper function to fetch data and stringify it
+async function getEmployees() {
+  try {
+    const employees = await EmployeeModel.find({}).lean();
+    return JSON.parse(JSON.stringify(employees));
+  } catch (error) {
+    console.error("Failed to fetch employees", error);
+    return [];
+  }
+}
+
 export default function ManagerEmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [roles, setRoles] = useState<string[]>(initialRoles);
   const [newRole, setNewRole] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function loadData() {
+      const data = await getEmployees();
+      setEmployees(data);
+    }
+    loadData();
+  }, []);
 
   const rankedEmployees = [...employees].sort((a, b) => b.points - a.points);
   
@@ -75,6 +95,8 @@ export default function ManagerEmployeesPage() {
         description: state.message,
       });
       setIsDialogOpen(false);
+      // refetch employees
+       getEmployees().then(setEmployees);
     } else if (state.message) {
       toast({
         title: "Error",

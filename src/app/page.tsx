@@ -14,13 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Globe } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { employees, clients } from '@/lib/data';
-
-// Mock user data for login
-const users = [
-  ...employees.map(e => ({ username: e.username, password: e.password, role: e.role.toLowerCase(), redirect: e.role === 'Manager' ? '/manager/dashboard' : '/employee/dashboard' })),
-  ...clients.map(c => ({ username: c.username, password: c.password, role: 'client', redirect: `/clients/${c.id}` })),
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,23 +21,30 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = users.find(u => u.username === username && u.password === password);
+    
+    // In a real app, you would make an API call to a login endpoint.
+    // Here we will simulate it. We can create a dedicated server action later.
+    
+    // This is a simplified example. A proper implementation would involve fetching users from DB.
+    // For now, we will have a hardcoded check for the initial manager.
+    if (username === 'base' && password === 'Base@!9098') {
+        toast({
+            title: 'Login Successful',
+            description: `Welcome! Redirecting you to the manager dashboard.`,
+        });
+        router.push('/manager/dashboard');
+        return;
+    }
 
-    if (user) {
-      toast({
-        title: 'Login Successful',
-        description: `Welcome! Redirecting you to the ${user.role} dashboard.`,
-      });
-      router.push(user.redirect);
-    } else {
-      toast({
+    // A real implementation would query the database for the user.
+    // For now, this part is disabled until other user data is in the DB.
+    toast({
         title: 'Login Failed',
         description: 'Invalid username or password. Please try again.',
         variant: 'destructive',
-      });
-    }
+    });
   };
 
 

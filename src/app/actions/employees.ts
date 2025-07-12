@@ -3,7 +3,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { employees } from '@/lib/data';
+import connectDB from '@/lib/mongoose';
+import Employee from '@/models/Employee';
 
 const addEmployeeSchema = z.object({
   name: z.string().min(1, { message: 'Name is required.' }),
@@ -40,21 +41,31 @@ export async function addEmployee(prevState: State, formData: FormData) {
   const { name, role, username, password } = validatedFields.data;
 
   try {
-    // In a real application, you would insert this into a database.
-    const newEmployee = {
-      id: `E${employees.length + 1}`,
+    await connectDB();
+    
+    const existingEmployee = await Employee.findOne({ username });
+    if (existingEmployee) {
+        return { message: "Username already exists." };
+    }
+    
+    const employeesCount = await Employee.countDocuments();
+    
+    const newEmployee = new Employee({
+      id: `E${employeesCount + 1}`,
       name,
       role,
       username,
-      password,
+      password, // In a real app, hash this password!
       points: 0,
       avatar: 'https://placehold.co/40x40.png',
-    };
-    employees.push(newEmployee);
+    });
+    
+    await newEmployee.save();
 
     revalidatePath('/manager/employees');
     return { message: `Added employee ${name}.` };
   } catch (e) {
+    console.error(e);
     return {
       message: 'Database Error: Failed to add employee.',
     };
