@@ -60,16 +60,7 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
             });
         }
     };
-
-    if (!currentUser) {
-        return (
-            <Card>
-                <CardHeader><CardTitle>Comments & Discussion</CardTitle></CardHeader>
-                <CardContent><p>Loading comments...</p></CardContent>
-            </Card>
-        );
-    }
-
+    
     return (
          <Card>
             <CardHeader>
@@ -100,24 +91,26 @@ function CommentSection({ task, getAvatarForRole, currentUser, onCommentAdded }:
                     {comments.length === 0 && <p className="text-muted-foreground text-center py-4">No comments yet.</p>}
                 </div>
             </CardContent>
-            <CardFooter>
-                <div className="w-full flex gap-3">
-                     <Avatar>
-                        <AvatarImage src={currentUser?.avatar} />
-                        <AvatarFallback>{currentUser?.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="w-full space-y-2">
-                        <Textarea 
-                            placeholder="Add a comment..." 
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                        />
-                        <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                            Post Comment
-                        </Button>
+            {currentUser && (
+                <CardFooter>
+                    <div className="w-full flex gap-3">
+                        <Avatar>
+                            <AvatarImage src={currentUser?.avatar} />
+                            <AvatarFallback>{currentUser?.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="w-full space-y-2">
+                            <Textarea 
+                                placeholder="Add a comment..." 
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                            />
+                            <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                                Post Comment
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </CardFooter>
+                </CardFooter>
+            )}
         </Card>
     )
 }
@@ -206,9 +199,8 @@ function TransferTaskDialog({ task, employees, onTaskTransferred }: { task: Task
 }
 
 
-export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId }: { initialTask: Task, allEmployees: Employee[], currentUserId: string | null }) {
+export function TaskDetailPageContent({ initialTask, allEmployees, currentUser }: { initialTask: Task, allEmployees: Employee[], currentUser: Employee | null }) {
     const [task, setTask] = useState(initialTask);
-    const currentUser = allEmployees.find(e => e.id === currentUserId) || null;
     
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -313,5 +305,3 @@ export function TaskDetailPageContent({ initialTask, allEmployees, currentUserId
         </div>
     );
 }
-
-    

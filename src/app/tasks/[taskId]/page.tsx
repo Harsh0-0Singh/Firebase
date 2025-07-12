@@ -37,6 +37,8 @@ export default async function TaskDetailPage({ params }: { params: { taskId: str
     const task = JSON.parse(JSON.stringify(taskData)) as Task;
     const allEmployees = JSON.parse(JSON.stringify(employeesData)) as Employee[];
     const currentUserId = getCurrentUserId();
+    const currentUser = allEmployees.find(e => e.id === currentUserId) || null;
 
-    return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} currentUserId={currentUserId} />;
+
+    return <TaskDetailPageContent initialTask={task} allEmployees={allEmployees} currentUser={currentUser} />;
 }
