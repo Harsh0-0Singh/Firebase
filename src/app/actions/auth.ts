@@ -42,14 +42,14 @@ export async function login(prevState: any, formData: FormData) {
         if (!isPasswordMatch) {
             return { message: 'Invalid username or password.' };
         }
-        
-        // Don't send the password back to the client
-        const userObject = user.toObject();
-        delete userObject.password;
 
         if (user.role === 'Manager') {
             role = 'Manager';
         }
+        
+        // Don't send the password back to the client
+        const userObject = user.toObject();
+        delete userObject.password;
 
         return { message: 'Login successful', user: userObject, role };
 
