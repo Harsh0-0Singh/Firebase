@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -27,12 +28,12 @@ import { transferTask } from '@/app/actions/tasks';
 import { getEmployees } from '@/app/actions/employees';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { notFound } from 'next/navigation';
 
 
 async function getTask(taskId: string): Promise<Task | null> {
     await connectDB();
     const task = await TaskModel.findOne({ id: taskId }).lean();
-    // Ensure comments is an array, even if it's undefined/null in the DB
     if (task && !task.comments) {
       task.comments = [];
     }
@@ -295,39 +296,17 @@ function TaskDetailPageContent({ initialTask, allEmployees }: { initialTask: Tas
     );
 }
 
-export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
-    const [task, setTask] = useState<Task | null>(null);
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function loadData() {
-            setLoading(true);
-            try {
-                const [taskData, employeesData] = await Promise.all([
-                    getTask(params.taskId),
-                    getEmployees()
-                ]);
-                setTask(taskData);
-                setEmployees(employeesData);
-            } catch (error) {
-                console.error("Failed to load task data:", error);
-                // Optionally handle the error, e.g., show a toast message
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadData();
-    }, [params.taskId]);
-
-    if (loading) {
-        return <div className="flex justify-center items-center h-screen">Loading...</div>;
+// This is now a Server Component
+export default async function TaskDetailPage({ params }: { params: { taskId: string } }) {
+    const taskData = await getTask(params.taskId);
+    
+    if (!taskData) {
+        notFound();
     }
+    
+    // Fetch and serialize employees
+    const employeesData = await getEmployees();
+    const plainEmployees = JSON.parse(JSON.stringify(employeesData));
 
-    if (!task) {
-        // You can render a "Not Found" message or component here
-        return <div className="flex justify-center items-center h-screen">Task not found.</div>;
-    }
-
-    return <TaskDetailPageContent initialTask={task} allEmployees={employees} />;
+    return <TaskDetailPageContent initialTask={taskData} allEmployees={plainEmployees} />;
 }
