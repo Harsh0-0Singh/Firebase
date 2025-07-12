@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TaskRequest, Employee, Task, NotificationMessage } from "@/lib/data";
+import { TaskRequest, Employee } from "@/lib/data";
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -23,32 +24,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ChevronsUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { format } from 'date-fns';
-import TaskRequestModel from '@/models/TaskRequest';
-import EmployeeModel from '@/models/Employee';
-import TaskModel from '@/models/Task';
-import MessageModel from '@/models/Message';
-
-
-async function getTaskRequests() {
-    try {
-        const requests = await TaskRequestModel.find({ status: 'Pending' }).lean();
-        return JSON.parse(JSON.stringify(requests));
-    } catch (error) {
-        console.error("Failed to fetch task requests", error);
-        return [];
-    }
-}
-
-async function getEmployees() {
-    try {
-        const employees = await EmployeeModel.find({}).lean();
-        return JSON.parse(JSON.stringify(employees));
-    } catch (error) {
-        console.error("Failed to fetch employees", error);
-        return [];
-    }
-}
+import { getEmployees } from '@/app/actions/employees';
+import { getPendingTaskRequests, approveRequest, rejectRequest } from '@/app/actions/requests';
 
 
 export default function TaskRequestsPage() {
@@ -60,7 +37,7 @@ export default function TaskRequestsPage() {
   useEffect(() => {
     async function loadData() {
         const [requestsData, employeesData] = await Promise.all([
-            getTaskRequests(),
+            getPendingTaskRequests(),
             getEmployees()
         ]);
         setRequests(requestsData);
@@ -80,43 +57,9 @@ export default function TaskRequestsPage() {
       return;
     }
     
-    const tasksCount = await TaskModel.countDocuments();
-    const newTaskId = `T${tasksCount + 1}`;
-
-    const newTaskData: Task = {
-      id: newTaskId,
-      title: request.title,
-      description: request.description,
-      assignees: assignees,
-      client: request.client,
-      dueDate: format(new Date(), 'yyyy-MM-dd'), // Placeholder, should be settable
-      status: 'Pending',
-      rating: 0,
-      createdBy: 'Alex Doe', // Manager approving
-      createdAt: format(new Date(), 'yyyy-MM-dd'),
-      comments: [],
-    };
-
-    const messagesCount = await MessageModel.countDocuments();
-    const newNotificationData: NotificationMessage = {
-      id: `M${messagesCount + 1}`,
-      type: 'notification',
-      content: `approved request "${newTaskData.title}" and assigned it to ${newTaskData.assignees.join(', ')}.`,
-      authorId: '1', // Alex Doe
-      timestamp: new Date().toISOString(),
-      taskId: newTaskId,
-    };
+    const result = await approveRequest(request, assignees);
     
-    try {
-        const newTask = new TaskModel(newTaskData);
-        const newNotification = new MessageModel(newNotificationData);
-        
-        await Promise.all([
-            newTask.save(),
-            newNotification.save(),
-            TaskRequestModel.findByIdAndUpdate(request._id, { status: 'Approved' })
-        ]);
-
+    if (result.success) {
         setRequests(requests.filter(r => r.id !== request.id));
         
         toast({
@@ -130,24 +73,23 @@ export default function TaskRequestsPage() {
             return next;
         });
 
-    } catch (error) {
-        console.error("Failed to approve task", error);
-        toast({ title: "Error", description: "Could not approve the task.", variant: "destructive" });
+    } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
     }
   };
 
   const handleReject = async (request: TaskRequest) => {
-     try {
-        await TaskRequestModel.findByIdAndUpdate(request._id, { status: 'Rejected' });
+     const result = await rejectRequest(request);
+
+     if (result.success) {
         setRequests(requests.filter(r => r.id !== request.id));
         toast({
             title: 'Request Rejected',
             description: 'The task request has been rejected.',
             variant: 'destructive',
         })
-     } catch (error) {
-        console.error("Failed to reject task", error);
-        toast({ title: "Error", description: "Could not reject the task.", variant: "destructive" });
+     } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
      }
   }
   
