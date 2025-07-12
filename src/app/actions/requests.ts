@@ -7,7 +7,14 @@ import connectDB from '@/lib/mongoose';
 import TaskRequestModel from '@/models/TaskRequest';
 import TaskModel from '@/models/Task';
 import MessageModel from '@/models/Message';
-import type { Task, NotificationMessage, TaskRequest } from '@/lib/data';
+import EmployeeModel from '@/models/Employee';
+import type { Task, NotificationMessage, TaskRequest, Employee } from '@/lib/data';
+
+async function getManager(): Promise<Employee | null> {
+    await connectDB();
+    const manager = await EmployeeModel.findOne({ role: 'Manager' }).lean();
+    return manager ? JSON.parse(JSON.stringify(manager)) : null;
+}
 
 export async function getPendingTaskRequests() {
     try {
@@ -23,6 +30,11 @@ export async function getPendingTaskRequests() {
 export async function approveRequest(request: TaskRequest, assignees: string[]) {
     try {
         await connectDB();
+        const manager = await getManager();
+
+        if (!manager) {
+            throw new Error("Manager not found");
+        }
 
         const tasksCount = await TaskModel.countDocuments();
         const newTaskId = `T${tasksCount + 1}`;
@@ -36,7 +48,7 @@ export async function approveRequest(request: TaskRequest, assignees: string[]) 
             dueDate: format(new Date(), 'yyyy-MM-dd'), // Placeholder, should be settable
             status: 'Pending',
             rating: 0,
-            createdBy: 'Alex Doe', // Manager approving
+            createdBy: manager.name,
             createdAt: format(new Date(), 'yyyy-MM-dd'),
         };
 
@@ -45,7 +57,7 @@ export async function approveRequest(request: TaskRequest, assignees: string[]) 
             id: `M${messagesCount + 1}`,
             type: 'notification',
             content: `approved request "${newTaskData.title}" and assigned it to ${newTaskData.assignees.join(', ')}.`,
-            authorId: '1', // Alex Doe
+            authorId: manager.id,
             timestamp: new Date().toISOString(),
             taskId: newTaskId,
         };
@@ -60,6 +72,8 @@ export async function approveRequest(request: TaskRequest, assignees: string[]) 
         ]);
 
         revalidatePath('/manager/requests');
+        revalidatePath('/manager/dashboard');
+        revalidatePath('/manager/tasks');
         return { success: true };
     } catch (error) {
         console.error("Failed to approve task", error);

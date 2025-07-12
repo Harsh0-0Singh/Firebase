@@ -7,7 +7,13 @@ import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
 import MessageModel from '@/models/Message';
 import EmployeeModel from '@/models/Employee';
-import type { Task, TaskStatus, NotificationMessage } from '@/lib/data';
+import type { Task, TaskStatus, NotificationMessage, Employee } from '@/lib/data';
+
+async function getManager(): Promise<Employee | null> {
+    await connectDB();
+    const manager = await EmployeeModel.findOne({ role: 'Manager' }).lean();
+    return manager ? JSON.parse(JSON.stringify(manager)) : null;
+}
 
 export async function getTasksForManager() {
     try {
@@ -41,6 +47,8 @@ export async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
         await connectDB();
         await TaskModel.findOneAndUpdate({ id: taskId }, { status: newStatus });
         revalidatePath('/manager/tasks');
+        revalidatePath('/manager/dashboard');
+        revalidatePath(`/tasks/${taskId}`);
         return { success: true };
     } catch (error) {
         console.error("Failed to update task status", error);
@@ -73,9 +81,14 @@ export async function submitTaskRating(taskId: string, rating: number, title: st
     }
 }
 
-export async function createTask(newTaskData: Omit<Task, '_id' | 'id' | 'comments'>) {
+export async function createTask(newTaskData: Omit<Task, '_id' | 'id' | 'comments' | 'createdBy' | 'createdAt'>) {
     try {
         await connectDB();
+        const manager = await getManager();
+        if (!manager) {
+            throw new Error("Manager not found");
+        }
+
         const tasksCount = await TaskModel.countDocuments();
         const newTaskId = `T${tasksCount + 1}`;
         
@@ -83,6 +96,8 @@ export async function createTask(newTaskData: Omit<Task, '_id' | 'id' | 'comment
             ...newTaskData,
             id: newTaskId,
             comments: [],
+            createdBy: manager.name,
+            createdAt: format(new Date(), 'yyyy-MM-dd'),
         }
 
         const messagesCount = await MessageModel.countDocuments();
@@ -90,7 +105,7 @@ export async function createTask(newTaskData: Omit<Task, '_id' | 'id' | 'comment
             id: `M${messagesCount + 1}`,
             type: 'notification',
             content: `created a new task "${finalTaskData.title}" and assigned it to ${finalTaskData.assignees.join(', ')}.`,
-            authorId: '1', // Alex Doe
+            authorId: manager.id, 
             timestamp: new Date().toISOString(),
             taskId: finalTaskData.id,
         };
@@ -104,6 +119,7 @@ export async function createTask(newTaskData: Omit<Task, '_id' | 'id' | 'comment
         ]);
         
         revalidatePath('/manager/tasks');
+        revalidatePath('/manager/dashboard');
         return { success: true, task: JSON.parse(JSON.stringify(finalTaskData)) };
 
     } catch (error) {

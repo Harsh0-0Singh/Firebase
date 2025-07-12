@@ -121,8 +121,6 @@ export default function ManagerTasksPage() {
       dueDate: format(new Date(newTaskDueDate), 'yyyy-MM-dd'),
       status: 'Pending' as TaskStatus,
       rating: 0,
-      createdBy: 'Alex Doe', // Logged in manager
-      createdAt: format(new Date(), 'yyyy-MM-dd'),
     };
     
     const result = await createTask(newTaskData);
