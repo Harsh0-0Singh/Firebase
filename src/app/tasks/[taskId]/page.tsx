@@ -1,4 +1,6 @@
 
+'use client';
+
 import { notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +13,7 @@ import { format, parseISO } from 'date-fns';
 import connectDB from '@/lib/mongoose';
 import TaskModel from '@/models/Task';
 import type { Task, Comment } from '@/lib/data';
+import { useState, useEffect } from 'react';
 
 async function getTask(taskId: string): Promise<Task | null> {
     await connectDB();
@@ -20,7 +23,6 @@ async function getTask(taskId: string): Promise<Task | null> {
 
 // A Client Component to handle returning to the previous page.
 function BackButton() {
-    'use client';
     const router = useRouter();
     return (
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -31,7 +33,6 @@ function BackButton() {
 
 // A Client Component for the comment section
 function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRole: (role:string) => string }) {
-    'use client';
     const [newComment, setNewComment] = useState('');
     const [comments, setComments] = useState(task.comments);
 
@@ -101,94 +102,102 @@ function CommentSection({ task, getAvatarForRole }: { task: Task, getAvatarForRo
     )
 }
 
-export default async function TaskDetailPage({ params }: { params: { taskId: string } }) {
-  const task = await getTask(params.taskId);
-
-  if (!task) {
-    notFound();
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completed': return 'bg-green-500 hover:bg-green-600';
-      case 'In Progress': return 'bg-blue-500 hover:bg-blue-600';
-      case 'Pending': return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'Blocked': return 'bg-red-500 hover:bg-red-600';
-      default: return 'bg-gray-500';
+function TaskDetailPageContent({ task }: { task: Task }) {
+    const getStatusColor = (status: string) => {
+        switch (status) {
+        case 'Completed': return 'bg-green-500 hover:bg-green-600';
+        case 'In Progress': return 'bg-blue-500 hover:bg-blue-600';
+        case 'Pending': return 'bg-yellow-500 hover:bg-yellow-600';
+        case 'Blocked': return 'bg-red-500 hover:bg-red-600';
+        default: return 'bg-gray-500';
+        }
     }
-  }
-  
-  const getAvatarForRole = (role: string) => {
-      // In a real app, you'd have user profiles with avatars
-      switch(role) {
-          case 'Manager': return 'https://placehold.co/40x40.png';
-          case 'Employee': return 'https://placehold.co/40x40.png';
-          case 'Client': return 'https://placehold.co/40x40.png';
-          default: return 'https://placehold.co/40x40.png';
-      }
-  }
+    
+    const getAvatarForRole = (role: string) => {
+        // In a real app, you'd have user profiles with avatars
+        switch(role) {
+            case 'Manager': return 'https://placehold.co/40x40.png';
+            case 'Employee': return 'https://placehold.co/40x40.png';
+            case 'Client': return 'https://placehold.co/40x40.png';
+            default: return 'https://placehold.co/40x40.png';
+        }
+    }
 
-
-  return (
-    <div className="min-h-screen bg-muted/40">
-        <header className="bg-background border-b">
-            <div className="container mx-auto flex items-center p-4">
-                 <BackButton />
-                <h1 className="text-xl font-semibold ml-2">Task Details</h1>
-            </div>
-        </header>
-        <main className="container mx-auto p-4 md:p-8 grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-3xl">{task.title}</CardTitle>
-                        <CardDescription>
-                            For client: <span className="font-medium text-primary">{task.client}</span>
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">{task.description}</p>
-                    </CardContent>
-                    <CardFooter className="flex-wrap gap-4">
-                        <div className="flex items-center gap-2 text-sm">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Created by:</span>
-                            <span className="font-semibold">{task.createdBy}</span>
-                        </div>
-                         <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Created on:</span>
-                            <span className="font-semibold">{format(parseISO(task.createdAt), 'PPP')}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Due on:</span>
-                            <span className="font-semibold">{format(parseISO(task.dueDate), 'PPP')}</span>
-                        </div>
-                    </CardFooter>
-                </Card>
-                <CommentSection task={task} getAvatarForRole={getAvatarForRole} />
-            </div>
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Task Info</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <h4 className="font-medium mb-2">Status</h4>
-                            <Badge variant="outline" className={cn("text-base text-white", getStatusColor(task.status))}>{task.status}</Badge>
-                        </div>
-                        <div>
-                            <h4 className="font-medium mb-2 flex items-center gap-2"><UserCheck /> Assignees</h4>
-                            <div className="flex flex-col gap-2">
-                                {task.assignees.map(name => <Badge key={name} variant="secondary">{name}</Badge>)}
+    return (
+        <div className="min-h-screen bg-muted/40">
+            <header className="bg-background border-b">
+                <div className="container mx-auto flex items-center p-4">
+                    <BackButton />
+                    <h1 className="text-xl font-semibold ml-2">Task Details</h1>
+                </div>
+            </header>
+            <main className="container mx-auto p-4 md:p-8 grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-3xl">{task.title}</CardTitle>
+                            <CardDescription>
+                                For client: <span className="font-medium text-primary">{task.client}</span>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">{task.description}</p>
+                        </CardContent>
+                        <CardFooter className="flex-wrap gap-4">
+                            <div className="flex items-center gap-2 text-sm">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Created by:</span>
+                                <span className="font-semibold">{task.createdBy}</span>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        </main>
-    </div>
-  );
+                            <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Created on:</span>
+                                <span className="font-semibold">{format(parseISO(task.createdAt), 'PPP')}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Due on:</span>
+                                <span className="font-semibold">{format(parseISO(task.dueDate), 'PPP')}</span>
+                            </div>
+                        </CardFooter>
+                    </Card>
+                    <CommentSection task={task} getAvatarForRole={getAvatarForRole} />
+                </div>
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Task Info</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <h4 className="font-medium mb-2">Status</h4>
+                                <Badge variant="outline" className={cn("text-base text-white", getStatusColor(task.status))}>{task.status}</Badge>
+                            </div>
+                            <div>
+                                <h4 className="font-medium mb-2 flex items-center gap-2"><UserCheck /> Assignees</h4>
+                                <div className="flex flex-col gap-2">
+                                    {task.assignees.map(name => <Badge key={name} variant="secondary">{name}</Badge>)}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </main>
+        </div>
+    );
+}
+
+export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
+    const [task, setTask] = useState<Task | null>(null);
+
+    useEffect(() => {
+        getTask(params.taskId).then(setTask);
+    }, [params.taskId]);
+
+    if (!task) {
+        // You can show a loading spinner here
+        return <div>Loading...</div>;
+    }
+
+    return <TaskDetailPageContent task={task} />;
 }
