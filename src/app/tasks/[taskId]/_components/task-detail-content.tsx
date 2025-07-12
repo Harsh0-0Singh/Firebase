@@ -58,7 +58,7 @@ function CommentSection({ task, getAvatarForRole, currentUser }: { task: Task, g
         const commentContent = newComment;
         setNewComment('');
 
-        const result = await addCommentToTask(task.id, currentUser, commentContent);
+        const result = await addCommentToTask(task.id, commentContent);
 
         if (result.success && result.comment) {
             // Replace temporary comment with the one from the server
